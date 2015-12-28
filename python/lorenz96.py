@@ -1,4 +1,5 @@
 import numpy as np
+from math import sqrt
 
 F = 8
 DT = 0.05

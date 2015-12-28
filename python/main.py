@@ -8,6 +8,7 @@ from numpy.linalg import norm
 import numpy as np
 from math import sqrt
 import matplotlib.pyplot as plt
+from matplotlib import rc
 
 from lorenz96 import lorenz96, DT
 from analysis import assimilate
@@ -52,14 +53,14 @@ for _ in range(num_steps-1):
 #===============================================================================
 
 # For now, every X variable is observed
-obs = np.array(truth_run)
+observations = np.array(truth_run)
 
 var_o = 0.1 * np.ones(num_x)
 sigma_o =  np.array([sqrt(x) for x in var_o])
 Ro = np.diag(var_o)
 
 # Perturb observations
-obs = [ob + sigma_o * randn(num_x) for ob in obs]
+observations = [ob + sigma_o * randn(num_x) for ob in observations]
 
 #===============================================================================
 # Setup filtering
@@ -69,12 +70,12 @@ obs = [ob + sigma_o * randn(num_x) for ob in obs]
 num_ens = 50
 
 # Initialization step
-Xa0 = np.mean(truth_run, axis=0)
+truth_mean = np.mean(truth_run, axis=0)
 var0 = 3 * np.ones(num_x)
 sigma0 = np.array([sqrt(x) for x in var0])
 
 # Define ensemble and perturb members
-ensemble = [Xa0 + sigma0 * randn(num_x) for _ in range(num_ens)]
+ensemble = [initial_truth + sigma0 * randn(num_x) for _ in range(num_ens)]
 
 # Store first step
 forecast_history = [np.mean(ensemble, axis=0)]
@@ -85,7 +86,8 @@ analysis_history = [np.mean(ensemble, axis=0)]
 # for comparison
 #===============================================================================
 
-free_run = [Xa0]
+free_run = [ensemble[0]]
+#free_run = [truth_mean]
 for _ in range(num_steps-1):
     free_run.append(lorenz96(free_run[-1]))
 
@@ -93,11 +95,11 @@ for _ in range(num_steps-1):
 # Run filter
 #===============================================================================
 
-for step in range(num_steps-1):
+for step in range(num_steps):
     print 'Step %d' % step
 
     # Forecast step
-    ensemble = [lorenz96(member) for member in ensemble]
+    ensemble = [lorenz96(member, model_error=True) for member in ensemble]
 
     ens_mean = np.mean(ensemble, axis=0)
 
@@ -108,7 +110,7 @@ for step in range(num_steps-1):
 
     # Analysis step (for now, copy analysis from MATLAB version. Slow matrix
     # operations can be optimised out later)
-    ensemble = assimilate(ensemble, obs[step], Ro)
+    ensemble = assimilate(ensemble, observations[step], Ro)
 
     analysis_history.append(np.mean(ensemble, axis=0))
 
@@ -118,21 +120,29 @@ for step in range(num_steps-1):
 # Plot results
 #===============================================================================
 
+# Plot RMS differences between truth run and other runs
 rms_free = []
-rms_fore = []
 rms_anal = []
 
 for step in range(num_steps):
     normalization = 1.0/sqrt(num_x)
 
     rms_free.append(normalization * norm(truth_run[step] - free_run[step]))
-    rms_fore.append(normalization * norm(truth_run[step] - forecast_history[step]))
     rms_anal.append(normalization * norm(truth_run[step] - analysis_history[step]))
 
-# Plot RMS differences between truth run and other runs
-free_handle, = plt.plot(rms_free)
-fore_handle, = plt.plot(rms_fore)
-anal_handle, = plt.plot(rms_anal)
-plt.legend([free_handle, fore_handle, anal_handle], ['Free', 'Forecast', 'Analysis'])
-plt.show()
+rc('font', family='Fira Sans Book')
 
+plt.figure(1)
+free_handle, = plt.plot(rms_free)
+anal_handle, = plt.plot(rms_anal)
+plt.legend([free_handle, anal_handle], ['Free', 'Analysis'])
+
+# Plot actual trajectories of forecast and truth norms
+truth_norm = [norm(step) for step in truth_run]
+anal_norm = [norm(step) for step in analysis_history]
+
+plt.figure(2)
+truth_handle, = plt.plot(truth_norm)
+anal_handle, = plt.plot(anal_norm)
+plt.legend([truth_handle, anal_handle], ['Truth', 'Analysis'])
+plt.show()
