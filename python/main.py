@@ -62,6 +62,10 @@ Ro = np.diag(var_o)
 # Perturb observations
 observations = [ob + sigma_o * randn(num_x) for ob in observations]
 
+plt.figure(1)
+plt.plot([x[0] for x in truth_run])
+plt.plot([x[0] for x in observations])
+
 #===============================================================================
 # Setup filtering
 #===============================================================================
@@ -132,17 +136,23 @@ for step in range(num_steps):
 
 rc('font', family='Fira Sans Book')
 
-plt.figure(1)
+fig = plt.figure(2, facecolor='white')
 free_handle, = plt.plot(rms_free)
 anal_handle, = plt.plot(rms_anal)
 plt.legend([free_handle, anal_handle], ['Free', 'Analysis'])
+plt.xlabel('MTUs')
+plt.ylabel('Distance from truth state vector')
+ax = plt.gca()
 
 # Plot actual trajectories of forecast and truth norms
 truth_norm = [norm(step) for step in truth_run]
 anal_norm = [norm(step) for step in analysis_history]
 
-plt.figure(2)
+fig = plt.figure(3, facecolor='white')
 truth_handle, = plt.plot(truth_norm)
 anal_handle, = plt.plot(anal_norm)
 plt.legend([truth_handle, anal_handle], ['Truth', 'Analysis'])
+plt.xlabel('MTUs')
+plt.ylabel('State vector magnitude')
+
 plt.show()
