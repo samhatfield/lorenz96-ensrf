@@ -33,7 +33,7 @@ num_steps = len(np.arange(t1, t2, DT)) + 1
 
 spins = 5000
 
-# Initial perturbation (Todo: why is this necessary?)
+# Initial perturbation
 initial_truth = 8 * np.ones(num_x)
 initial_truth[19] = 8.008
 
@@ -63,8 +63,8 @@ Ro = np.diag(var_o)
 observations = [ob + sigma_o * randn(num_x) for ob in observations]
 
 plt.figure(1)
-plt.plot([x[0] for x in truth_run])
-plt.plot([x[0] for x in observations])
+plt.plot([norm(x) for x in truth_run])
+plt.plot([norm(x) for x in observations])
 
 #===============================================================================
 # Setup filtering
@@ -90,8 +90,7 @@ analysis_history = [np.mean(ensemble, axis=0)]
 # for comparison
 #===============================================================================
 
-free_run = [ensemble[0]]
-#free_run = [truth_mean]
+free_run = [truth_mean]
 for _ in range(num_steps-1):
     free_run.append(lorenz96(free_run[-1]))
 
@@ -110,15 +109,11 @@ for step in range(num_steps):
     # Save ensemble state prior to analysis
     forecast_history.append(ens_mean)
 
-    print 'End forecast'
-
     # Analysis step (for now, copy analysis from MATLAB version. Slow matrix
     # operations can be optimised out later)
     ensemble = assimilate(ensemble, observations[step], Ro)
 
     analysis_history.append(np.mean(ensemble, axis=0))
-
-    print 'End analysis'
 
 #===============================================================================
 # Plot results
