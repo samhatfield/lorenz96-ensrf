@@ -106,14 +106,13 @@ for step in range(num_steps):
     # Forecast step
     ensemble = [lorenz96(member, model_error=True) for member in ensemble]
 
-    ens_mean = np.mean(ensemble, axis=0)
-
     # Time to perform an analysis?
     if step % assim_freq == 0:
         # Analysis step (for now, copy analysis from MATLAB version. Slow matrix
         # operations can be optimised out later)
         ensemble = assimilate(ensemble, observations[step], Ro)
 
+    # Store ensemble mean
     analysis_history.append(np.mean(ensemble, axis=0))
 
 #===============================================================================
