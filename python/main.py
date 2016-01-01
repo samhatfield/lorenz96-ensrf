@@ -27,6 +27,9 @@ t1, t2 = DT, 12
 # arange, so it is added separately
 num_steps = len(np.arange(t1, t2, DT)) + 1
 
+# Perform an assimilation every x timesteps
+assim_freq = 1 
+
 #===============================================================================
 # Spin up
 #===============================================================================
@@ -62,7 +65,7 @@ Ro = np.diag(var_o)
 # Perturb observations
 observations = [ob + sigma_o * randn(num_x) for ob in observations]
 
-plt.figure(1)
+plt.figure(1, facecolor='white')
 plt.plot([norm(x) for x in truth_run])
 plt.plot([norm(x) for x in observations])
 
@@ -82,7 +85,6 @@ sigma0 = np.array([sqrt(x) for x in var0])
 ensemble = [initial_truth + sigma0 * randn(num_x) for _ in range(num_ens)]
 
 # Store first step
-forecast_history = [np.mean(ensemble, axis=0)]
 analysis_history = [np.mean(ensemble, axis=0)]
 
 #===============================================================================
@@ -106,12 +108,11 @@ for step in range(num_steps):
 
     ens_mean = np.mean(ensemble, axis=0)
 
-    # Save ensemble state prior to analysis
-    forecast_history.append(ens_mean)
-
-    # Analysis step (for now, copy analysis from MATLAB version. Slow matrix
-    # operations can be optimised out later)
-    ensemble = assimilate(ensemble, observations[step], Ro)
+    # Time to perform an analysis?
+    if step % assim_freq == 0:
+        # Analysis step (for now, copy analysis from MATLAB version. Slow matrix
+        # operations can be optimised out later)
+        ensemble = assimilate(ensemble, observations[step], Ro)
 
     analysis_history.append(np.mean(ensemble, axis=0))
 
@@ -121,32 +122,30 @@ for step in range(num_steps):
 
 # Plot RMS differences between truth run and other runs
 rms_free = []
-rms_anal = []
+rms_analy = []
 
 for step in range(num_steps):
     normalization = 1.0/sqrt(num_x)
 
     rms_free.append(normalization * norm(truth_run[step] - free_run[step]))
-    rms_anal.append(normalization * norm(truth_run[step] - analysis_history[step]))
-
-rc('font', family='Fira Sans Book')
+    rms_analy.append(normalization * norm(truth_run[step] - analysis_history[step]))
 
 fig = plt.figure(2, facecolor='white')
 free_handle, = plt.plot(rms_free)
-anal_handle, = plt.plot(rms_anal)
-plt.legend([free_handle, anal_handle], ['Free', 'Analysis'])
+analy_handle, = plt.plot(rms_analy)
+plt.legend([free_handle, analy_handle], ['Free', 'Analysis'])
 plt.xlabel('MTUs')
 plt.ylabel('Distance from truth state vector')
 ax = plt.gca()
 
 # Plot actual trajectories of forecast and truth norms
 truth_norm = [norm(step) for step in truth_run]
-anal_norm = [norm(step) for step in analysis_history]
+analy_norm = [norm(step) for step in analysis_history]
 
 fig = plt.figure(3, facecolor='white')
 truth_handle, = plt.plot(truth_norm)
-anal_handle, = plt.plot(anal_norm)
-plt.legend([truth_handle, anal_handle], ['Truth', 'Analysis'])
+analy_handle, = plt.plot(analy_norm)
+plt.legend([truth_handle, analy_handle], ['Truth', 'Analysis'])
 plt.xlabel('MTUs')
 plt.ylabel('State vector magnitude')
 
