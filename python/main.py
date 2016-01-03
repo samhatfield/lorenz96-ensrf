@@ -28,7 +28,7 @@ t1, t2 = DT, 12
 num_steps = len(np.arange(t1, t2, DT)) + 1
 
 # Perform an assimilation every x timesteps
-assim_freq = 1 
+assim_freq = 1
 
 #===============================================================================
 # Spin up
@@ -65,10 +65,6 @@ Ro = np.diag(var_o)
 # Perturb observations
 observations = [ob + sigma_o * randn(num_x) for ob in observations]
 
-plt.figure(1, facecolor='white')
-plt.plot([norm(x) for x in truth_run])
-plt.plot([norm(x) for x in observations])
-
 #===============================================================================
 # Setup filtering
 #===============================================================================
@@ -101,7 +97,7 @@ for _ in range(num_steps-1):
 #===============================================================================
 
 for step in range(num_steps):
-    print 'Step %d' % step
+    print('Step %d' % step)
 
     # Forecast step
     ensemble = [lorenz96(member, model_error=True) for member in ensemble]
@@ -119,6 +115,14 @@ for step in range(num_steps):
 # Plot results
 #===============================================================================
 
+# Plot comparison of truth with observations
+plt.figure(1, facecolor='white')
+truth_handle, = plt.plot([norm(x) for x in truth_run])
+obs_handle, = plt.plot([norm(x) for x in observations])
+plt.legend([truth_handle, obs_handle], ['Truth', 'Observations'])
+plt.xlabel('MTUs')
+plt.ylabel('Norm')
+
 # Plot RMS differences between truth run and other runs
 rms_free = []
 rms_analy = []
@@ -135,7 +139,6 @@ analy_handle, = plt.plot(rms_analy)
 plt.legend([free_handle, analy_handle], ['Free', 'Analysis'])
 plt.xlabel('MTUs')
 plt.ylabel('Distance from truth state vector')
-ax = plt.gca()
 
 # Plot actual trajectories of forecast and truth norms
 truth_norm = [norm(step) for step in truth_run]
