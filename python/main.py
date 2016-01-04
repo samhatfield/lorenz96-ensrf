@@ -108,7 +108,8 @@ for _ in range(num_steps-1):
 print('Running filter...')
 
 for step in range(num_steps):
-    print('Step %d' % step)
+    if step % 10 == 0:
+        print('Step %d' % step)
 
     # Forecast step
     ensemble = [lorenz96(member, model_error=True) for member in ensemble]
