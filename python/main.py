@@ -8,7 +8,6 @@ from numpy.linalg import norm
 import numpy as np
 from math import sqrt
 import matplotlib.pyplot as plt
-from matplotlib import rc
 
 from lorenz96 import lorenz96, DT
 from analysis import assimilate
@@ -34,6 +33,8 @@ assim_freq = 1
 # Spin up
 #===============================================================================
 
+print('Spin up...')
+
 spins = 5000
 
 # Initial perturbation
@@ -47,6 +48,8 @@ for _ in range(spins):
 # Obtain truth run
 #===============================================================================
 
+print('Obtaining truth run...')
+
 truth_run = [initial_truth]
 for _ in range(num_steps-1):
     truth_run.append(lorenz96(truth_run[-1]))
@@ -54,6 +57,8 @@ for _ in range(num_steps-1):
 #===============================================================================
 # Extract and perturb observations
 #===============================================================================
+
+print('Obtaining observations...')
 
 # For now, every X variable is observed
 observations = np.array(truth_run)
@@ -78,6 +83,8 @@ var0 = 3 * np.ones(num_x)
 sigma0 = np.array([sqrt(x) for x in var0])
 
 # Define ensemble and perturb members
+print('Building initial ensemble...')
+
 ensemble = [initial_truth + sigma0 * randn(num_x) for _ in range(num_ens)]
 
 # Store first step
@@ -88,6 +95,8 @@ analysis_history = [np.mean(ensemble, axis=0)]
 # for comparison
 #===============================================================================
 
+print('Obtaining free run...')
+
 free_run = [truth_mean]
 for _ in range(num_steps-1):
     free_run.append(lorenz96(free_run[-1]))
@@ -95,6 +104,8 @@ for _ in range(num_steps-1):
 #===============================================================================
 # Run filter
 #===============================================================================
+
+print('Running filter...')
 
 for step in range(num_steps):
     print('Step %d' % step)
