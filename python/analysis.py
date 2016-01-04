@@ -3,15 +3,13 @@ from numpy.linalg import inv
 
 RHO = 1.4
 
-def assimilate(ensemble, obs, Ro):
+def assimilate(ensemble, obs_vec, Ro):
     ens_mean = np.mean(ensemble, axis=0)
     num_ens = len(ensemble)
 
     ens_trans = np.transpose(ensemble)
 
-    Obstab = np.transpose([obs,] * num_ens)
-
-    Innovtab = Obstab - ens_trans
+    obs_table = np.transpose([obs_vec,] * num_ens)
 
     Ensfp = ens_trans - np.transpose([ens_mean,] * num_ens)
 
@@ -23,6 +21,6 @@ def assimilate(ensemble, obs, Ro):
 
     Gain = np.dot(covfHt, inv(HcovfHt))
 
-    ens_trans = ens_trans + np.dot(Gain, Innovtab)
+    ens_trans = ens_trans + np.dot(Gain, obs_table - ens_trans)
 
     return [x for x in np.transpose(ens_trans)]
