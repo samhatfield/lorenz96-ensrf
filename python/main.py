@@ -78,7 +78,6 @@ observations = [ob + sigma_o * randn(num_x) for ob in observations]
 num_ens = 50
 
 # Initialization step
-truth_mean = np.mean(truth_run, axis=0)
 var0 = 3 * np.ones(num_x)
 sigma0 = np.array([sqrt(x) for x in var0])
 
@@ -102,7 +101,7 @@ filter_history = [{
 
 print('Obtaining free run...')
 
-free_run = [truth_mean]
+free_run = [ensemble[0]]
 for _ in range(num_steps-1):
     free_run.append(lorenz96(free_run[-1]))
 
