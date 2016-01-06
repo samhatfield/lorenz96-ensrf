@@ -88,7 +88,12 @@ print('Building initial ensemble...')
 ensemble = [initial_truth + sigma0 * randn(num_x) for _ in range(num_ens)]
 
 # Store first step
-analysis_history = [np.mean(ensemble, axis=0)]
+filter_history = [{
+    'mean': np.mean(ensemble, axis=0),
+    'mean_norm': np.mean([norm(mem) for mem in ensemble]),
+    'upp_norm': max([norm(mem) for mem in ensemble]),
+    'low_norm': min([norm(mem) for mem in ensemble])
+}]
 
 #===============================================================================
 # 'Free' run; a single run initialised from the time-mean of the truth run, 
@@ -121,7 +126,13 @@ for step in range(num_steps):
         ensemble = assimilate(ensemble, observations[step], Ro)
 
     # Store ensemble mean
-    analysis_history.append(np.mean(ensemble, axis=0))
+    filter_history.append({
+        'mean': np.mean(ensemble, axis=0),
+        'mean_norm': np.mean([norm(mem) for mem in ensemble]),
+        'upp_norm': max([norm(mem) for mem in ensemble]),
+        'low_norm': min([norm(mem) for mem in ensemble])
+    })
+
 
 #===============================================================================
 # Plot results
@@ -137,29 +148,35 @@ plt.ylabel('Norm')
 
 # Plot RMS differences between truth run and other runs
 rms_free = []
-rms_analy = []
+rms_filt = []
 
 for step in range(num_steps):
     normalization = 1.0/sqrt(num_x)
 
     rms_free.append(normalization * norm(truth_run[step] - free_run[step]))
-    rms_analy.append(normalization * norm(truth_run[step] - analysis_history[step]))
+    rms_filt.append(normalization * norm(truth_run[step] - filter_history[step]['mean']))
 
 fig = plt.figure(2, facecolor='white')
 free_handle, = plt.plot(rms_free)
-analy_handle, = plt.plot(rms_analy)
-plt.legend([free_handle, analy_handle], ['Free', 'Analysis'])
+filt_handle, = plt.plot(rms_filt)
+plt.legend([free_handle, filt_handle], ['Free', 'Analysis'])
 plt.xlabel('MTUs')
 plt.ylabel('Distance from truth state vector')
 
-# Plot actual trajectories of forecast and truth norms
+# Plot actual trajectories of filter, free and truth norms, along with ensemble
+# spread
 truth_norm = [norm(step) for step in truth_run]
-analy_norm = [norm(step) for step in analysis_history]
+filt_norm = [norm(step['mean_norm']) for step in filter_history]
+free_norm = [norm(step) for step in free_run]
+upp_norm = [step['upp_norm'] for step in filter_history]
+low_norm = [step['low_norm'] for step in filter_history]
 
 fig = plt.figure(3, facecolor='white')
 truth_handle, = plt.plot(truth_norm)
-analy_handle, = plt.plot(analy_norm)
-plt.legend([truth_handle, analy_handle], ['Truth', 'Analysis'])
+filt_handle, = plt.plot(filt_norm)
+free_handle,  = plt.plot(free_norm, color=(1,0.6,0.6,0.5))
+plt.fill_between(range(num_steps), low_norm, upp_norm, facecolor='green', alpha=0.5)
+plt.legend([truth_handle, filt_handle, free_handle], ['Truth', 'Analysis', 'Free'])
 plt.xlabel('MTUs')
 plt.ylabel('State vector magnitude')
 
