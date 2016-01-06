@@ -111,7 +111,8 @@ for _ in range(num_steps-1):
 
 print('Running filter...')
 
-for step in range(num_steps):
+# We skip the first step because the initial conditions are the first step
+for step in range(1, num_steps):
     if step % 10 == 0:
         print('Step %d' % step)
 
