@@ -1,17 +1,22 @@
 import numpy as np
+from numpy.random import randn
 from numpy.linalg import inv
 
 RHO = 1.4
 
-def assimilate(ensemble, obs_vec, Ro):
-    ens_mean = np.mean(ensemble, axis=0)
-    num_ens = len(ensemble)
+def assimilate(ensemble, obs_vec, Ro, sigma_o):
+    ens_mean = np.mean(ensemble, axis=1)
+    num_x, num_ens = ensemble.shape
 
-    ens_trans = np.transpose(ensemble)
+    # Table of perturbed observations. Each column contains the 
+    # observation vector for this timestep with a bit of Gaussian-drawn
+    # noise (different noise for each member)
+    obs_table = np.empty((num_x, num_ens))
+    for i in range(num_ens):
+        obs_table[:,i] = obs_vec + sigma_o * randn(num_x)
 
-    obs_table = np.transpose([obs_vec,] * num_ens)
-
-    Ensfp = ens_trans - np.transpose([ens_mean,] * num_ens)
+    # 'Anomaly table'. Each column is that member's difference from the mean
+    Ensfp = ensemble - ens_mean[:,np.newaxis]
 
     HEnsfp = Ensfp
 
@@ -21,6 +26,4 @@ def assimilate(ensemble, obs_vec, Ro):
 
     Gain = np.dot(covfHt, inv(HcovfHt))
 
-    ens_trans = ens_trans + np.dot(Gain, obs_table - ens_trans)
-
-    return [x for x in np.transpose(ens_trans)]
+    return ensemble + np.dot(Gain, obs_table - ensemble)

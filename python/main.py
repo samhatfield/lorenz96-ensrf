@@ -20,7 +20,7 @@ from analysis import assimilate
 num_x = 40
 
 # Starting and ending times
-t1, t2 = DT, 12 
+t1, t2 = DT, 24 
 
 # Set total number of model steps (last step isn't included by 
 # arange, so it is added separately
@@ -75,7 +75,7 @@ observations = [ob + sigma_o * randn(num_x) for ob in observations]
 #===============================================================================
 
 # Ensemble size
-num_ens = 50
+num_ens = 500
 
 # Initialization step
 var0 = 3 * np.ones(num_x)
@@ -84,14 +84,23 @@ sigma0 = np.array([sqrt(x) for x in var0])
 # Define ensemble and perturb members
 print('Building initial ensemble...')
 
-ensemble = [initial_truth + sigma0 * randn(num_x) for _ in range(num_ens)]
+# Ensemble members are arranged like this...
+# [F S T     L
+#  i e h     a
+#  r c i ... s
+#  s o r     t
+#  t n d
+#    d        ]
+ensemble = np.empty((num_x, num_ens))
+for i in range(num_ens):
+    ensemble[:,i] = initial_truth + sigma0 * randn(num_x)
 
 # Store first step
 filter_history = [{
-    'mean': np.mean(ensemble, axis=0),
-    'mean_norm': np.mean([norm(mem) for mem in ensemble]),
-    'upp_norm': max([norm(mem) for mem in ensemble]),
-    'low_norm': min([norm(mem) for mem in ensemble])
+    'mean': np.mean(ensemble, axis=1),
+    'mean_norm': np.mean(norm(ensemble, axis=0)),
+    'upp_norm': np.max(norm(ensemble, axis=0)),
+    'low_norm': np.min(norm(ensemble, axis=0))
 }]
 
 #===============================================================================
@@ -101,7 +110,7 @@ filter_history = [{
 
 print('Obtaining free run...')
 
-free_run = [ensemble[0]]
+free_run = [ensemble[:,0]]
 for _ in range(num_steps-1):
     free_run.append(lorenz96(free_run[-1]))
 
@@ -117,22 +126,21 @@ for step in range(1, num_steps):
         print('Step %d' % step)
 
     # Forecast step
-    ensemble = [lorenz96(member, model_error=True) for member in ensemble]
+    for i in range(num_ens):
+        ensemble[:,i] = lorenz96(ensemble[:,i])
 
     # Time to perform an analysis?
     if step % assim_freq == 0:
-        # Analysis step (for now, copy analysis from MATLAB version. Slow matrix
-        # operations can be optimised out later)
-        ensemble = assimilate(ensemble, observations[step], Ro)
+        # Analysis step
+        ensemble = assimilate(ensemble, observations[step], Ro, sigma_o)
 
     # Store ensemble mean
     filter_history.append({
-        'mean': np.mean(ensemble, axis=0),
-        'mean_norm': np.mean([norm(mem) for mem in ensemble]),
-        'upp_norm': max([norm(mem) for mem in ensemble]),
-        'low_norm': min([norm(mem) for mem in ensemble])
+        'mean': np.mean(ensemble, axis=1),
+        'mean_norm': np.mean(norm(ensemble, axis=0)),
+        'upp_norm': np.max(norm(ensemble, axis=0)),
+        'low_norm': np.min(norm(ensemble, axis=0))
     })
-
 
 #===============================================================================
 # Plot results
@@ -175,7 +183,7 @@ fig = plt.figure(3, facecolor='white')
 truth_handle, = plt.plot(truth_norm)
 filt_handle, = plt.plot(filt_norm)
 free_handle,  = plt.plot(free_norm, color=(1,0.6,0.6,0.5))
-plt.fill_between(range(num_steps), low_norm, upp_norm, facecolor='green', alpha=0.5)
+plt.fill_between(range(num_steps), low_norm, upp_norm, facecolor='green', alpha=0.5, edgecolor='none')
 plt.legend([truth_handle, filt_handle, free_handle], ['Truth', 'Analysis', 'Free'])
 plt.xlabel('MTUs')
 plt.ylabel('State vector magnitude')

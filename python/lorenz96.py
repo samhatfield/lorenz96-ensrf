@@ -9,8 +9,6 @@ Runge-Kutta integration scheme. This operates on the entire state vector at the
 same time.
 """
 def lorenz96(prev_state, model_error = False):
-    num_x = len(prev_state)
-
     k1 = dXdT(prev_state)
     k2 = dXdT(prev_state+0.5*DT*k1)
     k3 = dXdT(prev_state+0.5*DT*k2)
@@ -21,6 +19,7 @@ def lorenz96(prev_state, model_error = False):
     # Include normally distributed errors, if specified
     if model_error:
         # Model error can be modified here
+        num_x = prev_state.shape[0]
         return next_state + sqrt(DT) * np.random.randn(num_x)
     else:
         return next_state
