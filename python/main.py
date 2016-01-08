@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from lorenz96 import lorenz96, DT
 from analysis import assimilate
+from observation import observe
 
 #===============================================================================
 # Setup
@@ -60,15 +61,18 @@ for _ in range(num_steps-1):
 
 print('Obtaining observations...')
 
-# For now, every X variable is observed
-observations = np.array(truth_run)
+# Make observations
+observations = observe(np.transpose(truth_run))
 
-var_o = 0.1 * np.ones(num_x)
+# Dimension of observed state vector
+num_x_obs = observations.shape[0]
+
+var_o = 0.1 * np.ones(num_x_obs)
 sigma_o =  np.array([sqrt(x) for x in var_o])
 Ro = np.diag(var_o)
 
 # Perturb observations
-observations = [ob + sigma_o * randn(num_x) for ob in observations]
+observations = [ob + sigma_o * randn(num_x_obs) for ob in np.transpose(observations)]
 
 #===============================================================================
 # Setup filtering
