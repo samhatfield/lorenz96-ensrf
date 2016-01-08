@@ -108,8 +108,8 @@ filter_history = [{
 }]
 
 #===============================================================================
-# 'Free' run; a single run initialised from the time-mean of the truth run, 
-# for comparison
+# 'Free' run; a single run initialised from the first ensemble member, 
+# without analysis for comparison
 #===============================================================================
 
 print('Obtaining free run...')
