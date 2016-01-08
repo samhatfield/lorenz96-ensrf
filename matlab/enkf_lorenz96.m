@@ -21,7 +21,7 @@ Nx = 40;            % Nbre of variables in the Lorenz model.
 F  = 8;             % Lorenz model parameter.
 dt = 0.05;          % Time step ( = 6 hours).
 t1 = dt;            % Initial integration time.
-t2 = 6;            % Final integration time  (= 30 days = 4*0.05*30).
+t2 = 20;            % Final integration time  (= 30 days = 4*0.05*30).
 % t2 = 73;            % Final integration time  (= 1 year = 4*0.05*365).
 
 % Set total number of model steps
@@ -30,8 +30,8 @@ nmsteps = length(t1:dt:t2);
 % Initialize solution arrays
 ref_states     = zeros(nmsteps,Nx);
 free_states    = zeros(nmsteps,Nx);
-filter_statesa = zeros(nmsteps,Nx);
-filter_statesf = zeros(nmsteps,Nx);
+filter_states = zeros(nmsteps,Nx);
+forecast_states = zeros(nmsteps,Nx);
 
 
 
@@ -101,7 +101,7 @@ Ro     = diag(varo);
 
 %%% Perturb observations.
 for it = 1:size(obs,2)
-  obs_states(it,:) = obs(:,it)' + sigmao.*randn(1,No);
+  obs_states(it,:) = obs(:,it)';% + sigmao.*randn(1,No);
 end
 
 
@@ -114,7 +114,7 @@ end
 % =====================
 
 %%% Set the size of the ensemble.
-Ne = 50;
+Ne = 500;
 
 %%% Filter step (in model steps).
 fstep = dto/dt;
@@ -123,7 +123,7 @@ fstep = dto/dt;
 nfsteps = length(t1:dto:t2)-1;
 
 %%% Set inflation factor
-rho = 1.4;
+rho = 1.2;
 
 
 % Initilization Step
@@ -142,8 +142,8 @@ for i = 1:Ne
 end
 
 %%% Save initial filter estimate.
-filter_statesf(1,:)  = mean(Ensa,2)';
-filter_statesa(1,:)  = mean(Ensa,2)';
+forecast_states(1,:)  = mean(Ensa,2)';
+filter_states(1,:)  = mean(Ensa,2)';
 
 
 % -------------
@@ -180,8 +180,8 @@ for nf = 1:nfsteps
       Ensf(:,i) = Xn(i,:)';
     end
     % Save filter estimate.
-    filter_statesa((nf-1)*fstep+l+1,:) = mean(Ensf,2)';
-    filter_statesf((nf-1)*fstep+l+1,:) = mean(Ensf,2)';
+%     filter_states((nf-1)*fstep+l+1,:) = mean(Ensf,2)';
+    forecast_states(nf*fstep+1,:) = mean(Ensf,2)';
   end
   
   %%% Compute forecast state.
@@ -195,7 +195,7 @@ for nf = 1:nfsteps
   
   %%% Get observation vector at this time and perturb it.
   for i = 1:Ne
-    Obstab(:,i) = obs_states(nf*fstep+1,:)'; % + sigmao'.*randn(No,1);
+    Obstab(:,i) = obs_states((nf-1)*fstep+1,:)' + sigmao'.*randn(No,1);
   end
   
   %%% Compute innovation = Y - H*Ensf.
@@ -203,7 +203,8 @@ for nf = 1:nfsteps
   
   %%% Compute Ensfp = Ensf - mean(Ensf).
   Ensfp = Ensf - Ensfm(:,ones(1,Ne));
-  
+  Varf_states(nf,:) = diag((1/(Ne-1))*(Ensfp*Ensfp'));
+            
   %%% Compute H*Ensfp.
   HEnsfp = obs_operator(Ensfp,cas);
   
@@ -216,11 +217,13 @@ for nf = 1:nfsteps
   %%% Compute Gain.
   Gain = covfHt*inv(HcovfHt);
   
+  gainmax(nf*fstep+1) = max(abs(Gain(:)));
+  
   %%% Compute analysis ensemble.
   Ensa = Ensf + Gain*Innovtab;
   
   %%% Save filter estimate.
-  filter_statesa(nf*fstep+1,:) = mean(Ensa,2)';
+  filter_states(nf*fstep+1,:) = mean(Ensa,2)';
   
   disp(['  End Analysis  ']);
   
@@ -240,8 +243,8 @@ intf = [t1:5*dto:5*t2];
 % Compute RMS
 for nf = 1:nfsteps+1
   rmse(nf) = (1/sqrt(Nx))*norm(ref_states((nf-1)*fstep+1,:)-free_states((nf-1)*fstep+1,:),2);
-  rmsf(nf) = (1/sqrt(Nx))*norm(ref_states((nf-1)*fstep+1,:)-filter_statesf((nf-1)*fstep+1,:),2);
-  rmsa(nf) = (1/sqrt(Nx))*norm(ref_states((nf-1)*fstep+1,:)-filter_statesa((nf-1)*fstep+1,:),2);
+  rmsf(nf) = (1/sqrt(Nx))*norm(ref_states((nf-1)*fstep+1,:)-forecast_states((nf-1)*fstep+1,:),2);
+  rmsa(nf) = (1/sqrt(Nx))*norm(ref_states((nf-1)*fstep+1,:)-filter_states((nf-1)*fstep+1,:),2);
 end
 
 
@@ -263,7 +266,7 @@ disp(['Mean Forecast RMS = ' num2str(mean(rmsf))]);
 disp(['Mean Analysis RMS = ' num2str(mean(rmsa))]);
 disp('================');
 for i = 1:Nx
-  disp(['RMS VAR-' num2str(i) ': Free-Run = ' num2str((1/sqrt(nfsteps+1))*norm(ref_states(1:fstep:end,i)-free_states(1:fstep:end,i))) ' || Forecast = ' num2str((1/sqrt(nfsteps+1))*norm(ref_states(1:fstep:end,i)-filter_statesf(1:fstep:end,i))) ' || Analysis = ' num2str((1/sqrt(nfsteps+1))*norm(ref_states(1:fstep:end,i)-filter_statesa(1:fstep:end,i)))]);
+  disp(['RMS VAR-' num2str(i) ': Free-Run = ' num2str((1/sqrt(nfsteps+1))*norm(ref_states(1:fstep:end,i)-free_states(1:fstep:end,i))) ' || Forecast = ' num2str((1/sqrt(nfsteps+1))*norm(ref_states(1:fstep:end,i)-forecast_states(1:fstep:end,i))) ' || Analysis = ' num2str((1/sqrt(nfsteps+1))*norm(ref_states(1:fstep:end,i)-filter_states(1:fstep:end,i)))]);
 end
 
 
@@ -272,14 +275,14 @@ end
 figure
 subplot(2,1,1); hold on; 
 plot(intf,ref_states(1:fstep:end,1),'k'); 
-plot(intf,filter_statesf(1:fstep:end,1),'r');
-plot(intf,filter_statesa(1:fstep:end,1),'g');
+plot(intf,forecast_states(1:fstep:end,1),'r');
+plot(intf,filter_states(1:fstep:end,1),'g');
 title('VAR-1');
 legend('Reference','Forecast','Analysis');
 subplot(2,1,2); hold on; 
 plot(intf,abs(ref_states(1:fstep:end,1)-free_states(1:fstep:end,1)),'k');
-plot(intf,abs(ref_states(1:fstep:end,1)-filter_statesf(1:fstep:end,1)),'r');
-plot(intf,abs(ref_states(1:fstep:end,1)-filter_statesa(1:fstep:end,1)),'g');
+plot(intf,abs(ref_states(1:fstep:end,1)-forecast_states(1:fstep:end,1)),'r');
+plot(intf,abs(ref_states(1:fstep:end,1)-filter_states(1:fstep:end,1)),'g');
 title('Diff Var-1');
 %suptitle(['ENKF: ' num2str(Ne) ' Members'],12);
 legend('Free-Run','Forecast','Analysis');
@@ -287,14 +290,14 @@ legend('Free-Run','Forecast','Analysis');
 figure
 subplot(2,1,1); hold on; 
 plot(intf,ref_states(1:fstep:end,10),'k'); 
-plot(intf,filter_statesf(1:fstep:end,10),'r');
-plot(intf,filter_statesa(1:fstep:end,10),'g');
+plot(intf,forecast_states(1:fstep:end,10),'r');
+plot(intf,filter_states(1:fstep:end,10),'g');
 title('VAR-10');
 legend('Reference','Forecast','Analysis');
 subplot(2,1,2); hold on;
 plot(intf,abs(ref_states(1:fstep:end,10)-free_states(1:fstep:end,10)),'k');
-plot(intf,abs(ref_states(1:fstep:end,10)-filter_statesf(1:fstep:end,10)),'r');
-plot(intf,abs(ref_states(1:fstep:end,10)-filter_statesa(1:fstep:end,10)),'g');
+plot(intf,abs(ref_states(1:fstep:end,10)-forecast_states(1:fstep:end,10)),'r');
+plot(intf,abs(ref_states(1:fstep:end,10)-filter_states(1:fstep:end,10)),'g');
 title('Diff Var-10');
 %suptitle(['ENKF: ' num2str(Ne) ' Members'],12);
 legend('Free-Run','Forecast','Analysis');
@@ -302,14 +305,14 @@ legend('Free-Run','Forecast','Analysis');
 figure
 subplot(2,1,1); hold on; 
 plot(intf,ref_states(1:fstep:end,22),'k'); 
-plot(intf,filter_statesf(1:fstep:end,22),'r');
-plot(intf,filter_statesa(1:fstep:end,22),'g');
+plot(intf,forecast_states(1:fstep:end,22),'r');
+plot(intf,filter_states(1:fstep:end,22),'g');
 title('VAR-22');
 legend('Reference','Forecast','Analysis');
 subplot(2,1,2); hold on; 
 plot(intf,abs(ref_states(1:fstep:end,22)-free_states(1:fstep:end,22)),'k');
-plot(intf,abs(ref_states(1:fstep:end,22)-filter_statesf(1:fstep:end,22)),'r');
-plot(intf,abs(ref_states(1:fstep:end,22)-filter_statesa(1:fstep:end,22)),'g');
+plot(intf,abs(ref_states(1:fstep:end,22)-forecast_states(1:fstep:end,22)),'r');
+plot(intf,abs(ref_states(1:fstep:end,22)-filter_states(1:fstep:end,22)),'g');
 title('Diff Var-22'); 
 %suptitle(['ENKF: ' num2str(Ne) ' Members'],12);
 legend('Free-Run','Forecast','Analysis');
@@ -317,14 +320,14 @@ legend('Free-Run','Forecast','Analysis');
 figure
 subplot(2,1,1); hold on; 
 plot(intf,ref_states(1:fstep:end,37),'k'); 
-plot(intf,filter_statesf(1:fstep:end,37),'r');
-plot(intf,filter_statesa(1:fstep:end,37),'g');
+plot(intf,forecast_states(1:fstep:end,37),'r');
+plot(intf,filter_states(1:fstep:end,37),'g');
 title('VAR-37');
 legend('Reference','Forecast','Analysis');
 subplot(2,1,2); hold on; 
 plot(intf,abs(ref_states(1:fstep:end,37)-free_states(1:fstep:end,37)),'k');
-plot(intf,abs(ref_states(1:fstep:end,37)-filter_statesf(1:fstep:end,37)),'r');
-plot(intf,abs(ref_states(1:fstep:end,37)-filter_statesa(1:fstep:end,37)),'g');
+plot(intf,abs(ref_states(1:fstep:end,37)-forecast_states(1:fstep:end,37)),'r');
+plot(intf,abs(ref_states(1:fstep:end,37)-filter_states(1:fstep:end,37)),'g');
 title('Diff Var-37'); 
 %suptitle(['ENKF: ' num2str(Ne) ' Members'],12);
 legend('Free-Run','Forecast','Analysis');
@@ -333,5 +336,5 @@ legend('Free-Run','Forecast','Analysis');
 %%% Save solution.
 eval(['save Results/enkf=obs_' cas num2str(dto) '_N_' num2str(Ne) ...
       '_rho_' num2str(rho) '.mat intf Nx fstep nfsteps Ne rmse rmsf' ...
-      ' rmsa ref_states free_states filter_statesf filter_statesa;']);  
+      ' rmsa ref_states free_states forecast_states filter_states;']);  
 
