@@ -7,7 +7,6 @@ from numpy.random import randn
 from numpy.linalg import norm
 import numpy as np
 from math import sqrt
-import matplotlib.pyplot as plt
 import json
 
 from lorenz96 import lorenz96, DT
@@ -25,7 +24,7 @@ from datetime import datetime
 start = datetime.now()
 
 # Starting and ending times
-t1, t2 = DT, 6
+t1, t2 = DT, 3
 
 # Set total number of model steps (last step isn't included by 
 # arange, so it is added separately
@@ -150,52 +149,43 @@ for step in range(1, num_steps):
         'x_low_norm': np.min(norm(ensemble[:N_X,:], axis=0))
     })
 
-#===============================================================================
-# Plot results
-#===============================================================================
-
 print('Time elapsed: ' + str(datetime.now() - start))
 
-# Plot comparison of truth with observations
-plt.figure(1, facecolor='white')
-truth_handle, = plt.plot([norm(x) for x in truth_run])
-obs_handle, = plt.plot([norm(x) for x in observations])
-plt.legend([truth_handle, obs_handle], ['Truth', 'Observations'])
-plt.xlabel('MTUs')
-plt.ylabel('Norm')
+#===============================================================================
+# Save to JSON
+#===============================================================================
 
-# Plot RMS differences between truth run and other runs
-rms_free = []
-rms_filt = []
+# Make filter history JSON-parseable
+for step in filter_history:
+    for key, value in step.items():
+        if key == 'mean':
+            step['mean'] = step['mean'].tolist()
 
-for step in range(num_steps):
-    normalization = 1.0/sqrt(N_X)
+# Make truth run JSON-parseable
+truth_run = [step.tolist() for step in truth_run]
 
-    rms_free.append(normalization * norm(truth_run[step] - free_run[step]))
-    rms_filt.append(normalization * norm(truth_run[step] - filter_history[step]['mean']))
+# Make observations JSON-parseable
+observations = [step.tolist() for step in observations]
 
-fig = plt.figure(2, facecolor='white')
-free_handle, = plt.plot(rms_free)
-filt_handle, = plt.plot(rms_filt)
-plt.legend([free_handle, filt_handle], ['Free', 'Analysis'])
-plt.xlabel('MTUs')
-plt.ylabel('Distance from truth state vector')
+# Make free run JSON-parseable
+free_run = [step.tolist() for step in free_run]
 
-# Plot actual trajectories of filter, free and truth norms, along with ensemble
-# spread
-truth_norm = [norm(step) for step in truth_run]
-filt_norm = [norm(step['x_mean_norm']) for step in filter_history]
-free_norm = [norm(step) for step in free_run]
-x_upp_norm = [step['x_upp_norm'] for step in filter_history]
-x_low_norm = [step['x_low_norm'] for step in filter_history]
+# Collect results
+results = {
+    'time_elapsed': datetime.now() - start,
+    'params': {
+        'N_X': N_X,
+        'N_Y': N_Y,
+        'DT': DT,
+        'num_ens': num_ens
+    },
+    'filter_history': filter_history,
+    'truth_run': truth_run,
+    'observations': observations,
+    'free_run': free_run,
+    'num_steps': num_steps,
+    'N_X': N_X
+}
 
-fig = plt.figure(3, facecolor='white')
-truth_handle, = plt.plot(truth_norm)
-filt_handle, = plt.plot(filt_norm)
-free_handle,  = plt.plot(free_norm, color=(1,0.6,0.6,0.5))
-plt.fill_between(range(num_steps), x_low_norm, x_upp_norm, facecolor='green', alpha=0.5, edgecolor='none')
-plt.legend([truth_handle, filt_handle, free_handle], ['Truth', 'Analysis', 'Free'])
-plt.xlabel('MTUs')
-plt.ylabel('State vector magnitude')
-
-plt.show()
+with open('results.json', 'w') as json_file:
+    json.dump(results, json_file)

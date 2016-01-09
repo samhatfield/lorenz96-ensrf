@@ -1,7 +1,7 @@
 import numpy as np
 
 F = 20
-DT = 0.05
+DT = 0.005
 H = 1
 C = 4
 B = 10
