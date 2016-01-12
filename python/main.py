@@ -3,7 +3,7 @@ Authored by Sam Hatfield, heavily based on MATLAB code by Aneesh
 Subramanian.
 """
 
-from numpy.random import randn
+from numpy.random import randn, seed
 from numpy.linalg import norm
 import numpy as np
 from math import sqrt
@@ -32,6 +32,9 @@ num_steps = len(np.arange(t1, t2, DT)) + 1
 
 # Perform an assimilation every x timesteps
 assim_freq = 1
+
+# Set the seed
+seed(0)
 
 #===============================================================================
 # Spin up
@@ -172,7 +175,7 @@ free_run = [step.tolist() for step in free_run]
 
 # Collect results
 results = {
-    'time_elapsed': datetime.now() - start,
+    'time_elapsed': str(datetime.now() - start),
     'params': {
         'N_X': N_X,
         'N_Y': N_Y,
@@ -180,6 +183,7 @@ results = {
         'num_ens': num_ens
     },
     'filter_history': filter_history,
+    'assim_freq': assim_freq,
     'truth_run': truth_run,
     'observations': observations,
     'free_run': free_run,
