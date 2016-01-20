@@ -4,40 +4,91 @@ program main
     ! Declare globals
     real, parameter :: dt = 0.005
     real, parameter :: fin = 20
+    integer, parameter :: n_steps = fin / dt
+    integer :: i, j
+    integer, parameter :: n_ens = 500
+    integer, parameter :: assim_freq = 1
+
+    ! Model parameters
     integer, parameter :: n_x = 8
     integer, parameter :: n_y = 32
+    integer, parameter :: state_dim = n_x + n_x * n_y
     real, parameter :: f = 20
-    integer :: n_steps = fin / dt
-    integer :: i
     real :: h = 1
     real :: c = 4
     real :: b = 10
 
-    real, dimension(n_x+n_x*n_y) :: state
+    real, dimension(state_dim) :: initial_truth
+    real, dimension(state_dim, n_steps) :: truth_run
+    real, dimension(state_dim, n_ens) :: ensemble
+
+    !===========================================================================
+    ! Spin up
+    !===========================================================================
 
     ! Initial conditions for spin up
-    state(:n_x) = (/ (8, i = 1, n_x) /)
-    state(n_x+1:) = (/ (0.5, i = 1, n_x*n_y) /)
-    state(4) = 8.008
+    initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
+    initial_truth(n_x+1:) = (/ (0.5, i = 1, n_x*n_y) /)
+    initial_truth(4) = 8.008
 
     ! Spin up
     do i = 1, 5000
-        state = step(state)
+        initial_truth = step(initial_truth)
     end do
 
-    ! Run model
+    !===========================================================================
+    ! Truth run
+    !===========================================================================
+
+    truth_run(:, 1) = initial_truth
+    do i = 2, n_steps
+        truth_run(:, i) = step(truth_run(:, i-1))
+    end do
+
+    !===========================================================================
+    ! Make observations
+    !===========================================================================
+
+    !===========================================================================
+    ! Define ensemble
+    !===========================================================================
+
+    ! Perturb initial truth to generate members
+    do i = 1, n_ens
+        do j = 1, state_dim
+            ! Member perturbation has variance of ~3
+            ensemble(j, i) = initial_truth(j) + randn(0.0, 1.73)
+        end do
+    end do
+
+    !===========================================================================
+    ! Run filter
+    !===========================================================================
+
     do i = 1, n_steps
-        state = step(state)
-        print "(264F10.5)", state
+        ! Print every 100th timestep
+        if (mod(i, 100) == 0) then
+            write(*,*) 'Step ', i 
+        end if
+
+        ! Forecast step
+        do j = 1, n_ens
+            ensemble(:, j) = step(ensemble(:, j))
+        end do
+
+!        ! Analysis step
+!        if (mod(i, assim_freq) == 0) then
+!            ensemble = assimilate(ensemble, observations(i), Ro, sigma_o)
+!        end if
     end do
 
     contains
         ! Step forward once
         pure function step(prev_state)
-            real, dimension(n_x+n_x*n_y), intent(in) :: prev_state
+            real, dimension(state_dim), intent(in) :: prev_state
             real, dimension(n_x) :: x, k1, k2, k3, k4
             real, dimension(n_x*n_y) :: y, l1, l2, l3, l4
-            real, dimension(n_x+n_x*n_y) :: step
+            real, dimension(state_dim) :: step
 
             x = prev_state(:n_x)
             y = prev_state(n_x+1:)
@@ -87,4 +138,17 @@ program main
             dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - c*y
             dYdT = dYdT + (h*c/b)*x_rpt
         end function dYdT
+
+        ! Generates a randon number drawn for the specified normal distribution
+        function randn(mean, stdev)
+            real, intent(in) :: mean, stdev
+            real :: randn, rand(2), u, v
+
+            call random_number(rand)
+
+            ! Box-Muller method
+            u = (-2.0d0 * log(rand(1))) ** 0.5
+            v =   2.0d0 * 6.28318530718 * rand(2)
+            randn = mean + stdev * u * sin(v)
+        end function randn
 end program main

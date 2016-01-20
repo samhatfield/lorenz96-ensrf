@@ -1,2 +1,3 @@
 all:
-	gfortran main.f90 -o main
+	gfortran -c -Irpe/modules main.f90
+	gfortran -o main main.o -Lrpe/lib -lrpe
