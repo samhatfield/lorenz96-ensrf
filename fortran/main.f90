@@ -1,12 +1,22 @@
 program main
     implicit none
 
+    !===========================================================================
     ! Declare globals
+    !===========================================================================
+
+    ! Start and end times, and number of time steps
     real, parameter :: dt = 0.005
-    real, parameter :: fin = 20
+    real, parameter :: fin = 10
     integer, parameter :: n_steps = fin / dt
+
+    ! Loop counters
     integer :: i, j
+
+    ! Number of ensemble members
     integer, parameter :: n_ens = 500
+
+    ! Frequency of assimilations, i.e. 1 = every timestep
     integer, parameter :: assim_freq = 1
 
     ! Model parameters
@@ -18,13 +28,27 @@ program main
     real :: c = 4
     real :: b = 10
 
+    ! Observation error variance
+    real, parameter :: var_obs = 0.1
+    real, parameter :: sigma_obs = sqrt(var_obs)
+
+    ! For now, hard code the observation state vector dimension, assuming that
+    ! we are only assimilating the Y variables
+    ! Later on, I'll find a way for it to automatically calculate the
+    ! observation state vector dimension at compile time
+    integer, parameter :: obs_dim = n_y
+
     real, dimension(state_dim) :: initial_truth
     real, dimension(state_dim, n_steps) :: truth_run
+    real, dimension(obs_dim, n_steps) :: observations
     real, dimension(state_dim, n_ens) :: ensemble
+    real, dimension(obs_dim, obs_dim) :: obs_covar
 
     !===========================================================================
     ! Spin up
     !===========================================================================
+
+    !write(*,*) "Spinning up..."
 
     ! Initial conditions for spin up
     initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
@@ -40,18 +64,38 @@ program main
     ! Truth run
     !===========================================================================
 
+    !write(*,*) "Generating truth..."
+
     truth_run(:, 1) = initial_truth
     do i = 2, n_steps
         truth_run(:, i) = step(truth_run(:, i-1))
     end do
 
     !===========================================================================
-    ! Make observations
+    ! Extract and perturb observations
     !===========================================================================
+
+    !write(*,*) "Extracting observations..."
+
+    ! Make observations
+    observations = observe(truth_run) 
+
+    ! Define observational error covariance matrix (diagonal matrix of variances)
+    forall(i = 1:obs_dim, j = 1:obs_dim) obs_covar(i, j) = var_obs * (i/j)*(j/i)
+
+    ! Perturb observations
+    do i = 1, n_steps
+        do j = 1, obs_dim
+            ! Member perturbation has variance of ~3
+            observations(j, i) = observations(j, i) + randn(0.0, sigma_obs)
+        end do
+    end do
 
     !===========================================================================
     ! Define ensemble
     !===========================================================================
+
+    !write(*,*) "Generating ensemble..."
 
     ! Perturb initial truth to generate members
     do i = 1, n_ens
@@ -65,10 +109,12 @@ program main
     ! Run filter
     !===========================================================================
 
+    !write(*,*) "Running filter..."
+
     do i = 1, n_steps
         ! Print every 100th timestep
         if (mod(i, 100) == 0) then
-            write(*,*) 'Step ', i 
+            !write(*,*) 'Step ', i 
         end if
 
         ! Forecast step
@@ -80,6 +126,8 @@ program main
 !        if (mod(i, assim_freq) == 0) then
 !            ensemble = assimilate(ensemble, observations(i), Ro, sigma_o)
 !        end if
+
+        print "(264F10.5)", (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
     end do
 
     contains
@@ -139,7 +187,14 @@ program main
             dYdT = dYdT + (h*c/b)*x_rpt
         end function dYdT
 
-        ! Generates a randon number drawn for the specified normal distribution
+        pure function observe(state)
+            real, dimension(:, :), intent(in) :: state
+            real, dimension(obs_dim, size(state, 2)) :: observe
+
+            observe = state(n_x+1:,:)
+        end function observe
+
+        ! Generates a random number drawn for the specified normal distribution
         function randn(mean, stdev)
             real, intent(in) :: mean, stdev
             real :: randn, rand(2), u, v
