@@ -5,9 +5,12 @@ program main
     ! Declare globals
     !===========================================================================
 
+    integer, parameter :: dp = kind(1.d0)
+    integer, parameter :: out_unit = 20
+
     ! Start and end times, and number of time steps
-    real, parameter :: dt = 0.005
-    real, parameter :: fin = 10
+    real(dp), parameter :: dt = 0.005
+    real(dp), parameter :: fin = 5
     integer, parameter :: n_steps = fin / dt
 
     ! Loop counters
@@ -23,32 +26,32 @@ program main
     integer, parameter :: n_x = 8
     integer, parameter :: n_y = 32
     integer, parameter :: state_dim = n_x + n_x * n_y
-    real, parameter :: f = 20
-    real :: h = 1
-    real :: c = 4
-    real :: b = 10
+    real(dp), parameter :: f = 20
+    real(dp) :: h = 1
+    real(dp) :: c = 4
+    real(dp) :: b = 10
 
     ! Observation error variance
-    real, parameter :: var_obs = 0.1
-    real, parameter :: sigma_obs = sqrt(var_obs)
+    real(dp), parameter :: var_obs = 0.1
+    real(dp), parameter :: sig_obs = sqrt(var_obs)
 
     ! For now, hard code the observation state vector dimension, assuming that
     ! we are only assimilating the Y variables
     ! Later on, I'll find a way for it to automatically calculate the
     ! observation state vector dimension at compile time
-    integer, parameter :: obs_dim = n_y
+    integer, parameter :: obs_dim = n_x*n_y
 
-    real, dimension(state_dim) :: initial_truth
-    real, dimension(state_dim, n_steps) :: truth_run
-    real, dimension(obs_dim, n_steps) :: observations
-    real, dimension(state_dim, n_ens) :: ensemble
-    real, dimension(obs_dim, obs_dim) :: obs_covar
+    real(dp), dimension(state_dim) :: initial_truth
+    real(dp), dimension(state_dim, n_steps) :: truth_run
+    real(dp), dimension(obs_dim, n_steps) :: observations
+    real(dp), dimension(state_dim, n_ens) :: ensemble
+    real(dp), dimension(obs_dim, obs_dim) :: obs_covar
 
     !===========================================================================
     ! Spin up
     !===========================================================================
 
-    !write(*,*) "Spinning up..."
+    write(*,*) "Spinning up..."
 
     ! Initial conditions for spin up
     initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
@@ -64,18 +67,25 @@ program main
     ! Truth run
     !===========================================================================
 
-    !write(*,*) "Generating truth..."
+    write(*,*) "Generating truth..."
 
     truth_run(:, 1) = initial_truth
     do i = 2, n_steps
         truth_run(:, i) = step(truth_run(:, i-1))
     end do
 
+    ! Write to file
+    open(unit=out_unit, file="truth.tsv", action="write", status="replace")
+    do i = 1, n_steps
+        write (out_unit, "(264F10.5)") truth_run(:, i)
+    end do
+    close(out_unit)
+
     !===========================================================================
     ! Extract and perturb observations
     !===========================================================================
 
-    !write(*,*) "Extracting observations..."
+    write(*,*) "Extracting observations..."
 
     ! Make observations
     observations = observe(truth_run) 
@@ -87,7 +97,7 @@ program main
     do i = 1, n_steps
         do j = 1, obs_dim
             ! Member perturbation has variance of ~3
-            observations(j, i) = observations(j, i) + randn(0.0, sigma_obs)
+            observations(j, i) = observations(j, i) + randn(0.0d+0, sig_obs)
         end do
     end do
 
@@ -95,13 +105,13 @@ program main
     ! Define ensemble
     !===========================================================================
 
-    !write(*,*) "Generating ensemble..."
+    write(*,*) "Generating ensemble..."
 
     ! Perturb initial truth to generate members
     do i = 1, n_ens
         do j = 1, state_dim
             ! Member perturbation has variance of ~3
-            ensemble(j, i) = initial_truth(j) + randn(0.0, 1.73)
+            ensemble(j, i) = initial_truth(j) + randn(0.0d+0, 1.73d+0)
         end do
     end do
 
@@ -109,12 +119,13 @@ program main
     ! Run filter
     !===========================================================================
 
-    !write(*,*) "Running filter..."
+    write(*,*) "Running filter..."
 
+    open(unit=out_unit, file="filter.tsv", action="write", status="replace")
     do i = 1, n_steps
         ! Print every 100th timestep
         if (mod(i, 100) == 0) then
-            !write(*,*) 'Step ', i 
+            write(*,*) 'Step ', i 
         end if
 
         ! Forecast step
@@ -122,21 +133,22 @@ program main
             ensemble(:, j) = step(ensemble(:, j))
         end do
 
-!        ! Analysis step
-!        if (mod(i, assim_freq) == 0) then
-!            ensemble = assimilate(ensemble, observations(i), Ro, sigma_o)
-!        end if
+        ! Analysis step
+        if (mod(i, assim_freq) == 0) then
+            ensemble = assimilate(ensemble, observations(:, i), obs_covar, sig_obs)
+        end if
 
-        print "(264F10.5)", (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
+        write (out_unit, "(8F10.5)") (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, n_x) /)
     end do
+    close(out_unit)
 
     contains
         ! Step forward once
         pure function step(prev_state)
-            real, dimension(state_dim), intent(in) :: prev_state
-            real, dimension(n_x) :: x, k1, k2, k3, k4
-            real, dimension(n_x*n_y) :: y, l1, l2, l3, l4
-            real, dimension(state_dim) :: step
+            real(dp), dimension(state_dim), intent(in) :: prev_state
+            real(dp), dimension(n_x) :: x, k1, k2, k3, k4
+            real(dp), dimension(n_x*n_y) :: y, l1, l2, l3, l4
+            real(dp), dimension(state_dim) :: step
 
             x = prev_state(:n_x)
             y = prev_state(n_x+1:)
@@ -161,10 +173,10 @@ program main
 
         ! X ODE
         pure function dXdT(x, y)
-            real, dimension(n_x), intent(in) :: x
-            real, dimension(n_x*n_y), intent(in) :: y
-            real, dimension(n_x) :: dXdT
-            real, dimension(n_x) :: sum_y
+            real(dp), dimension(n_x), intent(in) :: x
+            real(dp), dimension(n_x*n_y), intent(in) :: y
+            real(dp), dimension(n_x) :: dXdT
+            real(dp), dimension(n_x) :: sum_y
 
             sum_y = sum(reshape(y, (/n_y,n_x/)), dim=1)
 
@@ -174,10 +186,10 @@ program main
 
         ! Y ODE
         pure function dYdT(x, y)
-            real, dimension(n_x), intent(in) :: x
-            real, dimension(n_x*n_y), intent(in) :: y
-            real, dimension(n_x*n_y) :: dYdT
-            real, dimension(n_x*n_y) :: x_rpt
+            real(dp), dimension(n_x), intent(in) :: x
+            real(dp), dimension(n_x*n_y), intent(in) :: y
+            real(dp), dimension(n_x*n_y) :: dYdT
+            real(dp), dimension(n_x*n_y) :: x_rpt
             integer :: k
 
             ! Repeat elements of x n_y times
@@ -188,16 +200,53 @@ program main
         end function dYdT
 
         pure function observe(state)
-            real, dimension(:, :), intent(in) :: state
-            real, dimension(obs_dim, size(state, 2)) :: observe
+            real(dp), dimension(:, :), intent(in) :: state
+            real(dp), dimension(obs_dim, size(state, 2)) :: observe
 
             observe = state(n_x+1:,:)
         end function observe
 
+        function assimilate(ensemble, obs_vec, obs_covar, sig_obs) result(analy)
+            real(dp), dimension(state_dim, n_ens), intent(in) :: ensemble
+            real(dp), dimension(obs_dim), intent(in) :: obs_vec
+            real(dp), dimension(obs_dim, obs_dim), intent(in) :: obs_covar
+            real(dp), intent(in) :: sig_obs
+            real(dp), dimension(state_dim, n_ens) :: analy, A
+            real(dp), dimension(state_dim) :: ens_mean
+            real(dp), dimension(obs_dim, n_ens) ::  obs_table
+            real(dp), dimension(state_dim, obs_dim) :: gain
+            real(dp), dimension(state_dim, obs_dim) :: ens_cov_h_t
+            real(dp) :: rho = 1.4
+            integer :: i, j
+
+            ! Mean ensemble vector
+            ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
+
+            ! Table of perturbed observations
+            do i = 1, n_ens
+                do j = 1, obs_dim
+                    obs_table(j, i) = obs_vec(j) + randn(0.0d+0, sig_obs)
+                end do
+            end do
+
+            ! 'Anomaly table'
+            do i = 1, n_ens
+                A(:, i) = ensemble(:, i) - ens_mean
+            end do
+
+            ! Ensemble covariance times transpose of observation matrix
+            ens_cov_h_t = (rho/(n_ens-1)) * matmul(A, transpose(observe(A)))
+
+            ! Kalman gain
+            gain = matmul(ens_cov_h_t, inv(observe(ens_cov_h_t) + obs_covar))
+
+            analy = ensemble + matmul(gain, obs_table - observe(ensemble))
+        end function assimilate
+
         ! Generates a random number drawn for the specified normal distribution
         function randn(mean, stdev)
-            real, intent(in) :: mean, stdev
-            real :: randn, rand(2), u, v
+            real(dp), intent(in) :: mean, stdev
+            real(dp) :: randn, rand(2), u, v
 
             call random_number(rand)
 
@@ -206,4 +255,32 @@ program main
             v =   2.0d0 * 6.28318530718 * rand(2)
             randn = mean + stdev * u * sin(v)
         end function randn
+
+        function inv(m) result(m_inv)
+            real(dp), dimension(:,:), intent(in) :: m
+            real(dp), dimension(size(m, 1), size(m, 2)) :: m_inv
+            real(dp), dimension(size(m, 1)) :: work
+            integer, dimension(size(m, 1)) :: ipiv
+            integer :: n, info
+
+            external dgetrf
+            external dgetri
+
+            m_inv = m
+            n = size(m, 1)
+
+            call dgetrf(n, n, m_inv, n, ipiv, info)
+
+            if (info > 0) then
+                stop 'Singular matrix!'
+            else if (info < 0) then
+                stop 'Illegal argument to dgetrf'
+            end if
+
+            call dgetri(n, m_inv, n, ipiv, work, n, info)
+
+            if (info /= 0) then
+                stop 'Matrix inversion failed'
+            end if
+        end function inv
 end program main
