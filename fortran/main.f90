@@ -6,11 +6,13 @@ program main
     !===========================================================================
 
     integer, parameter :: dp = kind(1.d0)
-    integer, parameter :: out_unit = 20
+    integer, parameter :: file_1 = 20
+    integer, parameter :: file_2 = 21
+    integer, parameter :: file_3 = 22
 
     ! Start and end times, and number of time steps
     real(dp), parameter :: dt = 0.005
-    real(dp), parameter :: fin = 5
+    real(dp), parameter :: fin = 12
     integer, parameter :: n_steps = fin / dt
 
     ! Loop counters
@@ -39,13 +41,17 @@ program main
     ! we are only assimilating the Y variables
     ! Later on, I'll find a way for it to automatically calculate the
     ! observation state vector dimension at compile time
-    integer, parameter :: obs_dim = n_x*n_y
+    ! TEMPORARILY OBSERVING ENTIRE STATE
+    integer, parameter :: obs_dim = state_dim
 
     real(dp), dimension(state_dim) :: initial_truth
     real(dp), dimension(state_dim, n_steps) :: truth_run
     real(dp), dimension(obs_dim, n_steps) :: observations
     real(dp), dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
+
+    ! For storing norms of each ensemble member (used for output)
+    real(dp), dimension(n_ens) :: x_norms
 
     !===========================================================================
     ! Spin up
@@ -74,13 +80,6 @@ program main
         truth_run(:, i) = step(truth_run(:, i-1))
     end do
 
-    ! Write to file
-    open(unit=out_unit, file="truth.tsv", action="write", status="replace")
-    do i = 1, n_steps
-        write (out_unit, "(264F10.5)") truth_run(:, i)
-    end do
-    close(out_unit)
-
     !===========================================================================
     ! Extract and perturb observations
     !===========================================================================
@@ -96,8 +95,8 @@ program main
     ! Perturb observations
     do i = 1, n_steps
         do j = 1, obs_dim
-            ! Member perturbation has variance of ~3
-            observations(j, i) = observations(j, i) + randn(0.0d+0, sig_obs)
+            ! Observation perturbation has variance of ~0.1
+            observations(j, i) = observations(j, i) + randn(0.0d0, sig_obs)
         end do
     end do
 
@@ -111,7 +110,7 @@ program main
     do i = 1, n_ens
         do j = 1, state_dim
             ! Member perturbation has variance of ~3
-            ensemble(j, i) = initial_truth(j) + randn(0.0d+0, 1.73d+0)
+            ensemble(j, i) = initial_truth(j) + randn(0.0d0, 1.73d0)
         end do
     end do
 
@@ -121,7 +120,7 @@ program main
 
     write(*,*) "Running filter..."
 
-    open(unit=out_unit, file="filter.tsv", action="write", status="replace")
+    open(unit=file_2, file="upper_lower.tsv", action="write", status="replace")
     do i = 1, n_steps
         ! Print every 100th timestep
         if (mod(i, 100) == 0) then
@@ -138,9 +137,17 @@ program main
             ensemble = assimilate(ensemble, observations(:, i), obs_covar, sig_obs)
         end if
 
-        write (out_unit, "(8F10.5)") (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, n_x) /)
+        ! Write upper, lower and average norm of ensemble members, and truth
+        ! and observation vector norm for this timestep
+        x_norms = norm2(ensemble(:n_x,:), 1)
+        write (file_2, *) maxval(x_norms), sum(x_norms)/real(n_ens), &
+            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:n_x,i))
     end do
-    close(out_unit)
+    close(file_2)
+
+    !===========================================================================
+    ! Functions
+    !===========================================================================
 
     contains
         ! Step forward once
@@ -203,7 +210,7 @@ program main
             real(dp), dimension(:, :), intent(in) :: state
             real(dp), dimension(obs_dim, size(state, 2)) :: observe
 
-            observe = state(n_x+1:,:)
+            observe = state
         end function observe
 
         function assimilate(ensemble, obs_vec, obs_covar, sig_obs) result(analy)
@@ -225,7 +232,7 @@ program main
             ! Table of perturbed observations
             do i = 1, n_ens
                 do j = 1, obs_dim
-                    obs_table(j, i) = obs_vec(j) + randn(0.0d+0, sig_obs)
+                    obs_table(j, i) = obs_vec(j) + randn(0.0d0, sig_obs)
                 end do
             end do
 
