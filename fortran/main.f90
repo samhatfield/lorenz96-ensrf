@@ -3,6 +3,7 @@ program main
     use lorenz96, only: step
     use utils, only: randn
     use analysis
+    use metadata
 
     implicit none
 
@@ -88,12 +89,18 @@ program main
     end do
 
     !===========================================================================
+    ! Write metadata to top of output file
+    !===========================================================================
+
+    call write_params()
+
+    !===========================================================================
     ! Run filter
     !===========================================================================
 
     write(*,*) "Running filter..."
 
-    open(unit=file_2, file="results.tsv", action="write", status="replace")
+    open(unit=file_2, file="results.yml", action="write", position="append")
     do i = 1, n_steps
         ! Print every 100th timestep
         if (mod(i, 100) == 0) then
@@ -113,7 +120,7 @@ program main
         ! Write upper, lower and average norm of ensemble members, and truth
         ! and observation vector norm for this timestep
         x_norms = norm2(ensemble(:n_x,:), 1)
-        write (file_2, *) maxval(x_norms), sum(x_norms)/real(n_ens), &
+        write (file_2, '(5f10.6)') maxval(x_norms), sum(x_norms)/real(n_ens), &
             & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:n_x,i))
     end do
     close(file_2)
