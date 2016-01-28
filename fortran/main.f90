@@ -121,7 +121,7 @@ program main
         ! and observation vector norm for this timestep
         x_norms = norm2(ensemble(:n_x,:), 1)
         write (file_2, '(5f10.6)') maxval(x_norms), sum(x_norms)/real(n_ens), &
-            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:n_x,i))
+            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:,i))
     end do
     close(file_2)
 end program main
