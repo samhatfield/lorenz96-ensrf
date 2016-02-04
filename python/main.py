@@ -9,7 +9,7 @@ import numpy as np
 from math import sqrt
 import json
 
-from lorenz96 import lorenz96, DT
+from lorenz96 import lorenz96, DT, H, C, B
 from analysis import assimilate
 from observation import observe
 from params import N_X, N_Y
@@ -24,7 +24,7 @@ from datetime import datetime
 start = datetime.now()
 
 # Starting and ending times
-t1, t2 = DT, 3
+t1, t2 = 0, 25
 
 # Set total number of model steps (last step isn't included by 
 # arange, so it is added separately
@@ -44,9 +44,9 @@ print('Spin up...')
 
 spins = 5000
 
-# Initial perturbation
-initial_truth = np.concatenate([8 * np.ones(N_X), randn(N_Y)])
-initial_truth[4] = 8.008
+# Build state vector and perturb it
+initial_truth = np.concatenate([8 * np.ones(N_X), 0.5*np.ones(N_X*N_Y)])
+initial_truth[3] = 8.008
 
 for _ in range(spins):
     initial_truth = lorenz96(initial_truth, (N_X, N_Y))
@@ -88,7 +88,7 @@ observations = [ob + sigma_o * randn(num_obs) for ob in np.transpose(observation
 num_ens = 500
 
 # Initialization step
-var0 = 3 * np.ones(N_X + N_Y)
+var0 = 3 * np.ones(N_X + N_X*N_Y)
 sigma0 = np.array([sqrt(x) for x in var0])
 
 # Define ensemble and perturb members
@@ -101,9 +101,9 @@ print('Building initial ensemble...')
 #  s o r     t
 #  t n d
 #    d        ]
-ensemble = np.empty((N_X + N_Y, num_ens))
+ensemble = np.empty((N_X + N_X*N_Y, num_ens))
 for i in range(num_ens):
-    ensemble[:,i] = initial_truth + sigma0 * randn(N_X + N_Y)
+    ensemble[:,i] = initial_truth + sigma0 * randn(N_X + N_X*N_Y)
 
 # Store first step
 filter_history = [{
@@ -180,15 +180,14 @@ results = {
         'N_X': N_X,
         'N_Y': N_Y,
         'DT': DT,
-        'num_ens': num_ens
+        'num_ens': num_ens,
+        'assim_freq': assim_freq,
+        'num_steps': num_steps
     },
     'filter_history': filter_history,
-    'assim_freq': assim_freq,
     'truth_run': truth_run,
     'observations': observations,
-    'free_run': free_run,
-    'num_steps': num_steps,
-    'N_X': N_X
+    'free_run': free_run
 }
 
 with open('results.json', 'w') as json_file:

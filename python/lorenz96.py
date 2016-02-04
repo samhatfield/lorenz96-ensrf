@@ -1,10 +1,10 @@
 import numpy as np
 
-F = 20
+F = 20.0
 DT = 0.005
-H = 1
-C = 4
-B = 10
+H = 1.0
+C = 10.0
+B = 10.0
 
 """
 Runge-Kutta integration scheme.

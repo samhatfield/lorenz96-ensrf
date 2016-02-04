@@ -3,16 +3,23 @@ import matplotlib.pyplot as plt
 from numpy.linalg import norm
 from math import sqrt
 import numpy as np
+from sys import argv
+from matplotlib import rc
+import re
 
-with open('results.json') as data_file:
+rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+
+with open(argv[1]) as data_file:
     results = json.load(data_file)
 
 filter_history = results['filter_history']
 truth_run = results['truth_run']
 observations = results['observations']
 free_run = results['free_run']
-num_steps = results['num_steps']
-N_X = results['N_X']
+num_steps = results['params']['num_steps']
+N_X = results['params']['N_X']
+N_Y = results['params']['N_Y']
+assim_freq = results['params']['assim_freq']
 
 # Plot comparison of truth with observations
 plt.figure(1, facecolor='white')
@@ -47,13 +54,28 @@ free_norm = [norm(step[:N_X]) for step in free_run]
 x_upp_norm = [step['x_upp_norm'] for step in filter_history]
 x_low_norm = [step['x_low_norm'] for step in filter_history]
 
-fig = plt.figure(3, facecolor='white')
+fig = plt.figure(3, facecolor='white', figsize=(12,6))
 truth_handle, = plt.plot(truth_norm)
 filt_handle, = plt.plot(filt_norm)
 free_handle,  = plt.plot(free_norm, color=(1,0.6,0.6,0.5))
 plt.fill_between(range(num_steps), x_low_norm, x_upp_norm, facecolor='green', alpha=0.5, edgecolor='none')
-plt.legend([truth_handle, filt_handle, free_handle], ['Truth', 'Analysis', 'Free'])
+leg = plt.legend([truth_handle, filt_handle, free_handle], ['Truth', 'Analysis', 'Free'], frameon=True)
+rect = leg.get_frame()
+rect.set_linewidth(0.0)
+rect.set_alpha(0.7)
+
 plt.xlabel('MTUs')
 plt.ylabel('State vector magnitude')
+title_timesteps = 'MTU' if assim_freq == 1 else str(assim_freq) + ' MTUs'
+title_timesteps += ' (%d, %d)' % (N_X, N_Y)
+plt.title('Assimilations every ' + title_timesteps)
+plt.ylim([10, 35])
+
+
+p = re.compile(r'\S+/(\S+).json')
+match = p.match(argv[1])
+figure_name = match.group(1)
+
+plt.savefig('figures/%s.pdf' % figure_name)
 
 plt.show()
