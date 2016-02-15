@@ -1,6 +1,6 @@
 module metadata
     use params
-    use lorenz96, only: h, c, b
+    use lorenz96
 
     implicit none
 
@@ -22,10 +22,16 @@ module metadata
             write (file_1, 6) 'fin: ', fin
             write (file_1, 2) 'n_x: ', n_x
             write (file_1, 2) 'n_y: ', n_y
+            write (file_1, 2) 'n_z: ', n_z
             write (file_1, 3) 'n_ens: ', n_ens
             write (file_1, 7) 'h: ', h
             write (file_1, 7) 'c: ', c
             write (file_1, 7) 'b: ', b
+            write (file_1, 7) 'e: ', e
+            write (file_1, 7) 'd: ', d
+            write (file_1, 6) 'g_X: ', g_X
+            write (file_1, 6) 'g_Y: ', g_Y
+            write (file_1, 6) 'g_Z ', g_Z 
             write (file_1, 4) 'assim_freq: ', assim_freq
             write (file_1, 5) 'var_obs: ', var_obs
             write (file_1, 8) 'obs_dim: ', obs_dim

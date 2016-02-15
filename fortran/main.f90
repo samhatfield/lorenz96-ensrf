@@ -42,7 +42,8 @@ program main
 
     ! Initial conditions for spin up
     initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
-    initial_truth(n_x+1:) = (/ (randn(0d0, 0.5d0), i = 1, n_x*n_y) /)
+    initial_truth(n_x+1:n_x+n_x*n_y) = (/ (randn(0d0, 0.5d0), i = 1, n_x*n_y) /)
+    initial_truth(n_x+n_x*n_y+1:) = (/ (randn(0d0, 0.5d0), i = 1, n_x*n_y*n_z) /)
     initial_truth(4) = 8.008
 
     ! Spin up

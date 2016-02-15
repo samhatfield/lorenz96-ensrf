@@ -10,8 +10,9 @@ module params
 
     ! State vector properties
     integer, parameter :: n_x = 8
-    integer, parameter :: n_y = 32
-    integer, parameter :: state_dim = n_x + n_x * n_y
+    integer, parameter :: n_y = 8
+    integer, parameter :: n_z = 8
+    integer, parameter :: state_dim = n_x + n_x*n_y + n_x*n_y*n_z
 
     ! Number of ensemble members
     integer, parameter :: n_ens = 500
