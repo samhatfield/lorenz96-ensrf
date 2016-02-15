@@ -17,6 +17,22 @@ module utils
             randn = mean + stdev * u * sin(v)
         end function randn
 
+        ! Seeds from system clock
+        subroutine time_seed()
+          integer :: i, n, clock
+          integer, dimension(:), allocatable :: seed
+        
+          call random_seed(size = n)
+          allocate(seed(n))
+        
+          call system_clock(count=clock)
+        
+          seed = clock + 37 * (/ (i - 1, i = 1, n) /)
+          call random_seed(put = seed)
+        
+          deallocate(seed)
+        end subroutine
+
         ! Matrix inverter based on LU decomposition
         ! Depends on LAPACK
         function inv(m) result(m_inv)

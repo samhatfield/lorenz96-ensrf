@@ -1,7 +1,7 @@
 program main
     use params
     use lorenz96, only: step
-    use utils, only: randn
+    use utils, only: randn, time_seed
     use analysis
     use metadata
 
@@ -27,6 +27,13 @@ program main
     ! For storing norms of each ensemble member (used for output)
     real(dp), dimension(n_ens) :: x_norms
 
+    ! For storing RMS forecast error, and ensemble mean vector
+    real(dp) :: rms_err
+    real(dp), dimension(state_dim) :: ens_mean
+
+    ! Seed
+    call time_seed()
+
     !===========================================================================
     ! Spin up
     !===========================================================================
@@ -35,7 +42,7 @@ program main
 
     ! Initial conditions for spin up
     initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
-    initial_truth(n_x+1:) = (/ (0.5, i = 1, n_x*n_y) /)
+    initial_truth(n_x+1:) = (/ (randn(0d0, 0.5d0), i = 1, n_x*n_y) /)
     initial_truth(4) = 8.008
 
     ! Spin up
@@ -117,11 +124,15 @@ program main
             ensemble = assimilate(ensemble, observations(:, i), obs_covar, sig_obs)
         end if
 
-        ! Write upper, lower and average norm of ensemble members, and truth
-        ! and observation vector norm for this timestep
+        ! Write upper, lower and average norm of ensemble members, rms forecast
+        ! error and truth and observation vector norm for this timestep
         x_norms = norm2(ensemble(:n_x,:), 1)
-        write (file_2, '(5f10.6)') maxval(x_norms), sum(x_norms)/real(n_ens), &
-            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:,i))
+        ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
+        rms_err = norm2(truth_run(:n_x, i) - ens_mean(:n_x))
+
+        write (file_2, '(6f11.6)') maxval(x_norms), sum(x_norms)/real(n_ens), &
+            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:,i)), &
+            & rms_err
     end do
     close(file_2)
 end program main
