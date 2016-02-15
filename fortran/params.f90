@@ -23,6 +23,9 @@ module params
     real(dp), parameter :: var_obs = 0.1
     real(dp), parameter :: sig_obs = sqrt(var_obs)
 
+    ! Inflation factor for tuning assimilation (see analysis.f90)
+    real(dp), parameter :: rho = 1.4
+
     ! For now, hard code the observation state vector dimension, assuming that
     ! we are only assimilating the Y variables
     ! Later on, I'll find a way for it to automatically calculate the

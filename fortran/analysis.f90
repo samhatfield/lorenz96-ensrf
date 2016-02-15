@@ -22,7 +22,6 @@ module analysis
             real(dp), dimension(obs_dim, n_ens) ::  obs_table
             real(dp), dimension(state_dim, obs_dim) :: gain
             real(dp), dimension(state_dim, obs_dim) :: ens_cov_h_t
-            real(dp) :: rho = 1.4
             integer :: i, j
 
             ! Mean ensemble vector
