@@ -4,7 +4,7 @@ module params
     integer, parameter :: dp = kind(1.d0)
 
     !Start and end times, and number of time steps
-    real(dp), parameter :: dt = 0.005
+    real(dp), parameter :: dt = 0.002
     real(dp), parameter :: fin = 12
     integer, parameter :: n_steps = fin / dt
 
@@ -28,7 +28,7 @@ module params
     real(dp), parameter :: rho = 1.4
 
     ! For now, hard code the observation state vector dimension, assuming that
-    ! we are only assimilating the Y variables
+    ! we are only assimilating the Z variables
     ! Later on, I'll find a way for it to automatically calculate the
     ! observation state vector dimension at compile time
     ! TEMPORARILY OBSERVING ENTIRE STATE
