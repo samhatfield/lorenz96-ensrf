@@ -31,7 +31,7 @@ module metadata
             write (file_1, 7) 'd: ', d
             write (file_1, 6) 'g_X: ', g_X
             write (file_1, 6) 'g_Y: ', g_Y
-            write (file_1, 6) 'g_Z ', g_Z 
+            write (file_1, 6) 'g_Z: ', g_Z 
             write (file_1, 4) 'assim_freq: ', assim_freq
             write (file_1, 5) 'var_obs: ', var_obs
             write (file_1, 8) 'obs_dim: ', obs_dim
