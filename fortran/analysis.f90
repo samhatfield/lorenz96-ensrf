@@ -9,20 +9,23 @@ module analysis
             real(dp), dimension(:, :), intent(in) :: state
             real(dp), dimension(obs_dim, size(state, 2)) :: observe
 
-            observe = state
+            observe = state(n_x+1:n_x+n_x*n_y,:)
         end function observe
 
-        function assimilate(ensemble, obs_vec, obs_covar, sig_obs) result(analy)
+        function assimilate(ensemble, obs_vec, obs_covar) result(analy)
             real(dp), dimension(state_dim, n_ens), intent(in) :: ensemble
             real(dp), dimension(obs_dim), intent(in) :: obs_vec
             real(dp), dimension(obs_dim, obs_dim), intent(in) :: obs_covar
-            real(dp), intent(in) :: sig_obs
             real(dp), dimension(state_dim, n_ens) :: analy, A
             real(dp), dimension(state_dim) :: ens_mean
             real(dp), dimension(obs_dim, n_ens) ::  obs_table
             real(dp), dimension(state_dim, obs_dim) :: gain
             real(dp), dimension(state_dim, obs_dim) :: ens_cov_h_t
+            real(dp) :: y_std
             integer :: i, j
+
+            ! Get y standard deviation (assume all y variances in y covariance matrix are the same)
+            y_std = sqrt(obs_covar(1, 1))
 
             ! Mean ensemble vector
             ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
@@ -30,7 +33,7 @@ module analysis
             ! Table of perturbed observations
             do i = 1, n_ens
                 do j = 1, obs_dim
-                    obs_table(j, i) = obs_vec(j) + randn(0.0d0, sig_obs)
+                    obs_table(j, i) = obs_vec(j) + randn(0.0d0, y_std)
                 end do
             end do
 

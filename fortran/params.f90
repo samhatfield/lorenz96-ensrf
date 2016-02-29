@@ -21,16 +21,11 @@ module params
     integer, parameter :: assim_freq = 1
 
     ! Observation error variance
-    real(dp), parameter :: var_obs = 0.1
-    real(dp), parameter :: sig_obs = sqrt(var_obs)
+    real(dp), parameter :: y_var = 0.1
 
     ! Inflation factor for tuning assimilation (see analysis.f90)
     real(dp), parameter :: rho = 1.4
 
-    ! For now, hard code the observation state vector dimension, assuming that
-    ! we are only assimilating the Z variables
-    ! Later on, I'll find a way for it to automatically calculate the
-    ! observation state vector dimension at compile time
-    ! TEMPORARILY OBSERVING ENTIRE STATE
-    integer, parameter :: obs_dim = state_dim
+    ! Observe only Y variables
+    integer, parameter :: obs_dim = n_x*n_y
 end module params

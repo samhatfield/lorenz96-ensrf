@@ -20,7 +20,7 @@ program main
 
     real(dp), dimension(state_dim) :: initial_truth
     real(dp), dimension(state_dim, n_steps) :: truth_run
-    real(dp), dimension(obs_dim, n_steps) :: observations
+    real(dp), dimension(obs_dim, n_steps) :: obs
     real(dp), dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
 
@@ -69,16 +69,15 @@ program main
     write(*,*) "Extracting observations..."
 
     ! Make observations
-    observations = observe(truth_run) 
+    obs = observe(truth_run) 
 
     ! Define observational error covariance matrix (diagonal matrix of variances)
-    forall(i = 1:obs_dim, j = 1:obs_dim) obs_covar(i, j) = var_obs * (i/j)*(j/i)
+    forall(i = 1:obs_dim, j = 1:obs_dim) obs_covar(i, j) = y_var * (i/j)*(j/i)
 
     ! Perturb observations
     do i = 1, n_steps
         do j = 1, obs_dim
-            ! Observation perturbation has variance of ~0.1
-            observations(j, i) = observations(j, i) + randn(0.0d0, sig_obs)
+            obs(j, i) = obs(j, i) + randn(0.0d0, sqrt(y_var))
         end do
     end do
 
@@ -122,7 +121,7 @@ program main
 
         ! Analysis step
         if (mod(i, assim_freq) == 0) then
-            ensemble = assimilate(ensemble, observations(:, i), obs_covar, sig_obs)
+            ensemble = assimilate(ensemble, obs(:, i), obs_covar)
         end if
 
         ! Write upper, lower and average norm of ensemble members, rms forecast
@@ -132,7 +131,7 @@ program main
         rms_err = norm2(truth_run(:n_x, i) - ens_mean(:n_x))
 
         write (file_2, '(6f11.6)') maxval(x_norms), sum(x_norms)/real(n_ens), &
-            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(observations(:,i)), &
+            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(obs(:,i)), &
             & rms_err
     end do
     close(file_2)

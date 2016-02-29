@@ -12,11 +12,12 @@ module metadata
             1 format(a4, f5.3)
             2 format(a4, i3)
             3 format(a6, i4)
-            4 format(a11, i2)
+            4 format(a11, i3)
             5 format(a8, f5.2)
             6 format(a4, f6.2)
             7 format(a3, f6.2)
             8 format(a8, i5)
+            9 format(a6, f7.4)
 
             write (file_1, 1) 'dt: ', dt 
             write (file_1, 6) 'fin: ', fin
@@ -33,7 +34,7 @@ module metadata
             write (file_1, 6) 'g_Y: ', g_Y
             write (file_1, 6) 'g_Z: ', g_Z 
             write (file_1, 4) 'assim_freq: ', assim_freq
-            write (file_1, 5) 'var_obs: ', var_obs
+            write (file_1, 9), 'y_var: ', y_var
             write (file_1, 8) 'obs_dim: ', obs_dim
             write (file_1, 6) 'rho: ', rho
             write (file_1, '(a)') '# Columns (all quantities calculated from &
