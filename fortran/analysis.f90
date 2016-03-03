@@ -33,7 +33,7 @@ module analysis
             ! Table of perturbed observations
             do i = 1, n_ens
                 do j = 1, obs_dim
-                    obs_table(j, i) = obs_vec(j) + randn(0.0d0, y_std)
+                    obs_table(j, i) = obs_vec(j) + randn(0.0_dp, y_std)
                 end do
             end do
 

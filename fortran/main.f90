@@ -42,9 +42,9 @@ program main
 
     ! Initial conditions for spin up
     initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
-    initial_truth(n_x+1:n_x+n_x*n_y) = (/ (randn(0d0, 0.5d0), i = 1, n_x*n_y) /)
-    initial_truth(n_x+n_x*n_y+1:) = (/ (randn(0d0, 0.5d0), i = 1, n_x*n_y*n_z) /)
-    initial_truth(4) = 8.008
+    initial_truth(n_x+1:n_x+n_x*n_y) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y) /)
+    initial_truth(n_x+n_x*n_y+1:) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y*n_z) /)
+    initial_truth(4) = 8.008_dp
 
     ! Spin up
     do i = 1, 5000
@@ -77,7 +77,7 @@ program main
     ! Perturb observations
     do i = 1, n_steps
         do j = 1, obs_dim
-            obs(j, i) = obs(j, i) + randn(0.0d0, sqrt(y_var))
+            obs(j, i) = obs(j, i) + randn(0.0_dp, sqrt(y_var))
         end do
     end do
 
@@ -91,7 +91,7 @@ program main
     do i = 1, n_ens
         do j = 1, state_dim
             ! Member perturbation has variance of ~3
-            ensemble(j, i) = initial_truth(j) + randn(0.0d0, 1.73d0)
+            ensemble(j, i) = initial_truth(j) + randn(0.0_dp, 1.73_dp)
         end do
     end do
 

@@ -12,8 +12,8 @@ module utils
             call random_number(rand)
 
             ! Box-Muller method
-            u = (-2.0d0 * log(rand(1))) ** 0.5
-            v =   2.0d0 * 6.28318530718 * rand(2)
+            u = (-2.0_dp * log(rand(1))) ** 0.5_dp
+            v =   2.0_dp * 6.28318530718_dp * rand(2)
             randn = mean + stdev * u * sin(v)
         end function randn
 

@@ -4,13 +4,13 @@ module lorenz96
     implicit none
 
     ! Model parameters
-    real(dp), parameter :: f = 20
-    real(dp), parameter :: h = 1
-    real(dp), parameter :: c = 10
-    real(dp), parameter :: b = 10
-    real(dp), parameter :: e = 10
-    real(dp), parameter :: d = 10
-    real(dp), parameter :: g_X = 1
+    real(dp), parameter :: f = 20._dp
+    real(dp), parameter :: h = 1._dp
+    real(dp), parameter :: c = 10._dp
+    real(dp), parameter :: b = 10._dp
+    real(dp), parameter :: e = 10._dp
+    real(dp), parameter :: d = 10._dp
+    real(dp), parameter :: g_X = 1._dp
     real(dp), parameter :: g_Y = c
     real(dp), parameter :: g_Z = e
 
@@ -22,11 +22,11 @@ module lorenz96
 
             ! 4th order Runge-Kutta
             k1 = ode(prev_state)
-            k2 = ode(prev_state+0.5*dt*k1) 
-            k3 = ode(prev_state+0.5*dt*k2) 
+            k2 = ode(prev_state+0.5_dp*dt*k1)
+            k3 = ode(prev_state+0.5_dp*dt*k2)
             k4 = ode(prev_state+dt*k3) 
 
-            step = prev_state + (dt/6)*(k1 + 2*k2 + 2*k3 + k4)
+            step = prev_state + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
         end function step
 
         pure function ode(state)
