@@ -1,5 +1,5 @@
 module utils
-    use params, only: dp
+    use params, only: dp, n_x, n_y
 
     implicit none
 
@@ -62,4 +62,33 @@ module utils
                 stop 'Matrix inversion failed'
             end if
         end function inv
+        
+        ! Calculate (biased) standard deviation
+        function std(vars)
+            real(dp), intent(in) :: vars(:)
+            real(dp) :: std
+            real(dp) :: mean
+            integer :: n, j
+            n = size(vars)
+            
+            mean = sum(vars) / real(n, dp)
+            std = sum((/ ((vars(j) - mean)**2, j = 1, n) /))
+            std = sqrt(std / real(n, dp) )
+        end function
+        
+        ! Zero mean AR(1) process
+        function additive_noise(last) result(e)
+            real(dp), dimension(n_x*n_y), intent(in) :: last
+            real(dp), dimension(n_x*n_y) :: e
+            real(dp) :: phi = 0.997_dp
+            real(dp) :: sigma_e = 0.126_dp
+            real(dp), dimension(n_x*n_y) :: z
+            integer :: i
+            
+            do i = 1, n_x*n_y
+                z(i) = randn(0.0_dp, sigma_e)
+            end do
+            
+            e = phi * last + sqrt(1-phi**2) * z
+        end function additive_noise
 end module utils

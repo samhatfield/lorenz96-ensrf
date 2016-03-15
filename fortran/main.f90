@@ -1,7 +1,7 @@
 program main
     use params
-    use lorenz96, only: step
-    use utils, only: randn, time_seed
+    use lorenz96, only: step, step_param_z
+    use utils, only: randn, time_seed, additive_noise
     use analysis
     use metadata
 
@@ -18,8 +18,8 @@ program main
     ! Loop counters
     integer :: i, j
 
-    real(dp), dimension(state_dim) :: initial_truth
-    real(dp), dimension(state_dim, n_steps) :: truth_run
+    real(dp), dimension(truth_dim) :: initial_truth
+    real(dp), dimension(truth_dim, n_steps) :: truth_run
     real(dp), dimension(obs_dim, n_steps) :: obs
     real(dp), dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
@@ -30,6 +30,9 @@ program main
     ! For storing RMS forecast error, and ensemble mean vector
     real(dp) :: rms_err
     real(dp), dimension(state_dim) :: ens_mean
+    
+    ! Stores stochastic components for each ensemble members
+    real(dp), dimension(n_x*n_y, n_ens) :: stochs
 
     ! Seed
     call time_seed()
@@ -90,8 +93,17 @@ program main
     ! Perturb initial truth to generate members
     do i = 1, n_ens
         do j = 1, state_dim
-            ! Member perturbation has variance of ~3
             ensemble(j, i) = initial_truth(j) + randn(0.0_dp, 1.73_dp)
+        end do
+    end do
+
+    !===========================================================================
+    ! Initialise stochastic components vector
+    !===========================================================================
+
+    do i = 1, n_x*n_y
+        do j = 1, n_ens
+            stochs(i, j) = 0.0_dp
         end do
     end do
 
@@ -116,7 +128,8 @@ program main
 
         ! Forecast step
         do j = 1, n_ens
-            ensemble(:, j) = step(ensemble(:, j))
+            stochs(:, j) = additive_noise(stochs(:, j))
+            ensemble(:, j) = step_param_z(ensemble(:, j), stochs(:, j))
         end do
 
         ! Analysis step
@@ -130,9 +143,8 @@ program main
         ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
         rms_err = norm2(truth_run(:n_x, i) - ens_mean(:n_x))
 
-        write (file_2, '(6f11.6)') maxval(x_norms), sum(x_norms)/real(n_ens), &
-            & minval(x_norms), norm2(truth_run(:n_x,i)), norm2(obs(:,i)), &
-            & rms_err
+        write (file_2, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
+            & norm2(truth_run(:n_x,i)), norm2(obs(:,i)), rms_err
     end do
     close(file_2)
 end program main

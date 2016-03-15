@@ -1,5 +1,6 @@
 module lorenz96
     use params
+    use utils, only: randn
 
     implicit none
 
@@ -15,10 +16,14 @@ module lorenz96
     real(dp), parameter :: g_Z = e
 
     contains
+        !===========================================================================
+        ! Full three-level model (for full two-level model, just set n_z = 0)
+        !===========================================================================
+
         ! Step forward once
         function step(prev_state)
-            real(dp), dimension(state_dim), intent(in) :: prev_state
-            real(dp), dimension(state_dim) :: step, k1, k2, k3, k4
+            real(dp), dimension(truth_dim), intent(in) :: prev_state
+            real(dp), dimension(truth_dim) :: step, k1, k2, k3, k4
 
             ! 4th order Runge-Kutta
             k1 = ode(prev_state)
@@ -28,13 +33,14 @@ module lorenz96
 
             step = prev_state + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
         end function step
-
+        
+        ! The full three-level system of ODEs for the Lorenz '96 system
         pure function ode(state)
-            real(dp), dimension(state_dim), intent(in) :: state
+            real(dp), dimension(truth_dim), intent(in) :: state
             real(dp), dimension(n_x) :: x
             real(dp), dimension(n_x*n_y) :: y
             real(dp), dimension(n_x*n_y*n_z) :: z
-            real(dp), dimension(state_dim) :: ode
+            real(dp), dimension(truth_dim) :: ode
 
             ! Break up state vector into components
             x = state(:n_x)
@@ -96,4 +102,64 @@ module lorenz96
             dZdT = e*b*cshift(z,-1)*(cshift(z,1)-cshift(z,-2)) - g_Z*Z
             dZdT = dZdT + (h*e/d)*y_rpt
         end function dZdT
+        
+        !===========================================================================
+        ! Three-level model with parametrised Z dynamics
+        !===========================================================================     
+
+        ! Step forward once
+        function step_param_z(prev_state, stoch) result(step)
+            real(dp), dimension(n_x+n_x*n_y), intent(in) :: prev_state
+            real(dp), dimension(n_x*n_y), intent(in) :: stoch
+            real(dp), dimension(n_x+n_x*n_y) :: step, k1, k2, k3, k4  
+            
+            ! 4th order Runge-Kutta
+            k1 = ode_param_z(prev_state, stoch)
+            k2 = ode_param_z(prev_state+0.5_dp*dt*k1, stoch)
+            k3 = ode_param_z(prev_state+0.5_dp*dt*k2, stoch)
+            k4 = ode_param_z(prev_state+dt*k3, stoch)
+
+            step = prev_state + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
+        end function step_param_z
+
+        ! The three-level system of ODEs for the Lorenz '96 system, with
+        ! parametrized Z
+        pure function ode_param_z(state, stoch) result(ode)
+            real(dp), dimension(state_dim), intent(in) :: state
+            real(dp), dimension(n_x*n_y), intent(in) :: stoch
+            real(dp), dimension(n_x) :: x
+            real(dp), dimension(n_x*n_y) :: y
+            real(dp), dimension(state_dim) :: ode
+
+            ! Break up state vector into components
+            x = state(:n_x)
+            y = state(n_x+1:)
+
+            ! Find derivative of each component separately
+            ode(:n_x) = dXdT(x, y)
+            ode(n_x+1:) = dYdT_param_z(x, y, stoch)
+        end function ode_param_z
+
+        ! Y ODE, parametrized Z
+        pure function dYdT_param_z(x, y, stoch) result(dYdT)
+            real(dp), dimension(n_x), intent(in) :: x
+            real(dp), dimension(n_x*n_y), intent(in) :: y
+            real(dp), dimension(n_x*n_y), intent(in) :: stoch
+            real(dp), dimension(n_x*n_y) :: dYdT
+            real(dp), dimension(n_x*n_y) :: x_rpt
+            real(dp), dimension(n_x*n_y) :: tend_z
+            integer :: k
+
+            ! Repeat elements of x n_y times
+            x_rpt = (/ (x(1+(k-1)/n_y), k = 1, n_x*n_y) /)
+
+            ! Compute the Z tendency from the chosen parametrization scheme
+            ! Deterministic, 4th order polynomial
+            tend_z = (0.001892_dp*y**4) + (-0.066811_dp*y**3) + &
+                & (0.131826_dp*y**2) + (0.242742_dp*y) + 0.039970_dp
+                
+            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y*y
+            dYdT = dYdT + (h*c/b)*x_rpt        
+            dYdT = dYdT - (tend_z + stoch)
+        end function dYdT_param_z
 end module lorenz96

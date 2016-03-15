@@ -39,7 +39,7 @@ module metadata
             write (file_1, 6) 'rho: ', rho
             write (file_1, '(a)') '# Columns (all quantities calculated from &
             & X variables only:'
-            write (file_1, '(a)') '# Max norm, Avg norm, Min norm, Truth, Obs, RMS err'
+            write (file_1, '(a)') '# Avg norm, Std norm, Truth, Obs, RMS err'
             write (file_1, '(a5)') '--- |'
 
             close(file_1)
