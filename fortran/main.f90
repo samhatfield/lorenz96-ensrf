@@ -23,6 +23,8 @@ program main
     real(dp), dimension(obs_dim, n_steps) :: obs
     real(dp), dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
+    real(dp), dimension(truth_dim) :: climatology_mean
+    real(dp), dimension(truth_dim) :: climatology_std
 
     ! For storing norms of each ensemble member (used for output)
     real(dp), dimension(n_ens) :: x_norms
@@ -90,10 +92,14 @@ program main
 
     write(*,*) "Generating ensemble..."
 
-    ! Perturb initial truth to generate members
+    ! Get climatology from time average of truth
+    climatology_mean = (/ (sum(truth_run(j, :))/real(n_steps, dp), j = 1, truth_dim) /)
+    climatology_std = (/ (std(truth_run(j, :)), j = 1, truth_dim) /)
+
+    ! Perturb climatology to generate members
     do i = 1, n_ens
         do j = 1, state_dim
-            ensemble(j, i) = initial_truth(j) + randn(0.0_dp, 1.73_dp)
+            ensemble(j, i) = climatology_mean(j) + randn(0.0_dp, climatology_std(j))
         end do
     end do
 
