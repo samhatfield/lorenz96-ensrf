@@ -43,7 +43,7 @@ module analysis
             end do
 
             ! Ensemble covariance times transpose of observation matrix
-            ens_cov_h_t = (rho/(n_ens-1)) * matmul(A, transpose(observe(A)))
+            ens_cov_h_t = (rho/real(n_ens-1, dp)) * matmul(A, transpose(observe(A)))
 
             ! Kalman gain
             gain = matmul(ens_cov_h_t, inv(observe(ens_cov_h_t) + obs_covar))

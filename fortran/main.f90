@@ -101,11 +101,7 @@ program main
     ! Initialise stochastic components vector
     !===========================================================================
 
-    do i = 1, n_x*n_y
-        do j = 1, n_ens
-            stochs(i, j) = 0.0_dp
-        end do
-    end do
+    stochs(:, :) = 0.0_dp
 
     !===========================================================================
     ! Write metadata to top of output file
@@ -121,6 +117,15 @@ program main
 
     open(unit=file_2, file="results.yml", action="write", position="append")
     do i = 1, n_steps
+        ! Write upper, lower and average norm of ensemble members, rms forecast
+        ! error and truth and observation vector norm for this timestep
+        x_norms = norm2(ensemble(:n_x,:), 1)
+        ens_mean = (/ (sum(ensemble(j, :))/real(n_ens, dp) , j = 1, state_dim) /)
+        rms_err = norm2(truth_run(:n_x, i) - ens_mean(:n_x))
+
+        write (file_2, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
+            & norm2(truth_run(:n_x,i)), norm2(obs(:,i)), rms_err
+    
         ! Print every 100th timestep
         if (mod(i, 100) == 0) then
             write(*,*) 'Step ', i 
@@ -136,15 +141,6 @@ program main
         if (mod(i, assim_freq) == 0) then
             ensemble = assimilate(ensemble, obs(:, i), obs_covar)
         end if
-
-        ! Write upper, lower and average norm of ensemble members, rms forecast
-        ! error and truth and observation vector norm for this timestep
-        x_norms = norm2(ensemble(:n_x,:), 1)
-        ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
-        rms_err = norm2(truth_run(:n_x, i) - ens_mean(:n_x))
-
-        write (file_2, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
-            & norm2(truth_run(:n_x,i)), norm2(obs(:,i)), rms_err
     end do
     close(file_2)
 end program main

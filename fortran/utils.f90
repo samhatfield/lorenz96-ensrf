@@ -73,7 +73,7 @@ module utils
             
             mean = sum(vars) / real(n, dp)
             std = sum((/ ((vars(j) - mean)**2, j = 1, n) /))
-            std = sqrt(std / real(n, dp) )
+            std = sqrt(std / real(n, dp))
         end function
         
         ! Zero mean AR(1) process
