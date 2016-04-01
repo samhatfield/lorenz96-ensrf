@@ -42,13 +42,13 @@ module utils
             integer, dimension(size(m, 1)) :: ipiv
             integer :: n, info
 
-            external dgetrf
-            external dgetri
+            external rgetrf
+            external rgetri
 
             m_inv = m
             n = size(m, 1)
 
-            call dgetrf(n, n, m_inv, n, ipiv, info)
+            call rgetrf(n, m_inv, n, ipiv, info)
 
             if (info > 0) then
                 stop 'Singular matrix!'
@@ -56,7 +56,7 @@ module utils
                 stop 'Illegal argument to dgetrf'
             end if
 
-            call dgetri(n, m_inv, n, ipiv, work, n, info)
+            call rgetri(n, m_inv, n, ipiv, work, n, info)
 
             if (info /= 0) then
                 stop 'Matrix inversion failed'
