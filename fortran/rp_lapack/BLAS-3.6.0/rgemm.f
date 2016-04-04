@@ -1,4 +1,4 @@
-*> \brief \b DGEMM
+*> \brief \b RGEMM
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,7 +8,7 @@
 *  Definition:
 *  ===========
 *
-*       SUBROUTINE DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+*       SUBROUTINE RGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 * 
 *       .. Scalar Arguments ..
 *       DOUBLE PRECISION ALPHA,BETA
@@ -25,7 +25,7 @@
 *>
 *> \verbatim
 *>
-*> DGEMM  performs one of the matrix-matrix operations
+*> RGEMM  performs one of the matrix-matrix operations
 *>
 *>    C := alpha*op( A )*op( B ) + beta*C,
 *>
@@ -185,7 +185,9 @@
 *> \endverbatim
 *>
 *  =====================================================================
-      SUBROUTINE DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+      SUBROUTINE RGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+
+      USE RP_EMULATOR
 *
 *  -- Reference BLAS level3 routine (version 3.6.0) --
 *  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -193,12 +195,12 @@
 *     November 2015
 *
 *     .. Scalar Arguments ..
-      DOUBLE PRECISION ALPHA,BETA
+      TYPE(RPE_VAR) ALPHA,BETA
       INTEGER K,LDA,LDB,LDC,M,N
       CHARACTER TRANSA,TRANSB
 *     ..
 *     .. Array Arguments ..
-      DOUBLE PRECISION A(LDA,*),B(LDB,*),C(LDC,*)
+      TYPE(RPE_VAR) A(LDA,*),B(LDB,*),C(LDC,*)
 *     ..
 *
 *  =====================================================================
@@ -210,18 +212,16 @@
 *     .. External Subroutines ..
       EXTERNAL XERBLA
 *     ..
-*     .. Intrinsic Functions ..
-      INTRINSIC MAX
-*     ..
 *     .. Local Scalars ..
-      DOUBLE PRECISION TEMP
+      TYPE(RPE_VAR) TEMP
       INTEGER I,INFO,J,L,NCOLA,NROWA,NROWB
       LOGICAL NOTA,NOTB
 *     ..
 *     .. Parameters ..
-      DOUBLE PRECISION ONE,ZERO
-      PARAMETER (ONE=1.0D+0,ZERO=0.0D+0)
-*     ..
+      TYPE(RPE_VAR) ONE,ZERO
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *
 *     Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
 *     transposed and set  NROWA, NCOLA and  NROWB  as the number of rows
@@ -265,7 +265,7 @@
           INFO = 13
       END IF
       IF (INFO.NE.0) THEN
-          CALL XERBLA('DGEMM ',INFO)
+          CALL XERBLA('RGEMM ',INFO)
           RETURN
       END IF
 *
@@ -379,6 +379,6 @@
 *
       RETURN
 *
-*     End of DGEMM .
+*     End of RGEMM .
 *
       END

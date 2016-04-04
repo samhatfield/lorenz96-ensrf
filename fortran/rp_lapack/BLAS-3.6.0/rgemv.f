@@ -1,4 +1,4 @@
-*> \brief \b DGBMV
+*> \brief \b RGEMV
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,11 +8,11 @@
 *  Definition:
 *  ===========
 *
-*       SUBROUTINE DGBMV(TRANS,M,N,KL,KU,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+*       SUBROUTINE RGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 * 
 *       .. Scalar Arguments ..
 *       DOUBLE PRECISION ALPHA,BETA
-*       INTEGER INCX,INCY,KL,KU,LDA,M,N
+*       INTEGER INCX,INCY,LDA,M,N
 *       CHARACTER TRANS
 *       ..
 *       .. Array Arguments ..
@@ -25,12 +25,12 @@
 *>
 *> \verbatim
 *>
-*> DGBMV  performs one of the matrix-vector operations
+*> RGEMV  performs one of the matrix-vector operations
 *>
 *>    y := alpha*A*x + beta*y,   or   y := alpha*A**T*x + beta*y,
 *>
 *> where alpha and beta are scalars, x and y are vectors and A is an
-*> m by n band matrix, with kl sub-diagonals and ku super-diagonals.
+*> m by n matrix.
 *> \endverbatim
 *
 *  Arguments:
@@ -63,20 +63,6 @@
 *>           N must be at least zero.
 *> \endverbatim
 *>
-*> \param[in] KL
-*> \verbatim
-*>          KL is INTEGER
-*>           On entry, KL specifies the number of sub-diagonals of the
-*>           matrix A. KL must satisfy  0 .le. KL.
-*> \endverbatim
-*>
-*> \param[in] KU
-*> \verbatim
-*>          KU is INTEGER
-*>           On entry, KU specifies the number of super-diagonals of the
-*>           matrix A. KU must satisfy  0 .le. KU.
-*> \endverbatim
-*>
 *> \param[in] ALPHA
 *> \verbatim
 *>          ALPHA is DOUBLE PRECISION.
@@ -86,24 +72,8 @@
 *> \param[in] A
 *> \verbatim
 *>          A is DOUBLE PRECISION array of DIMENSION ( LDA, n ).
-*>           Before entry, the leading ( kl + ku + 1 ) by n part of the
-*>           array A must contain the matrix of coefficients, supplied
-*>           column by column, with the leading diagonal of the matrix in
-*>           row ( ku + 1 ) of the array, the first super-diagonal
-*>           starting at position 2 in row ku, the first sub-diagonal
-*>           starting at position 1 in row ( ku + 2 ), and so on.
-*>           Elements in the array A that do not correspond to elements
-*>           in the band matrix (such as the top left ku by ku triangle)
-*>           are not referenced.
-*>           The following program segment will transfer a band matrix
-*>           from conventional full matrix storage to band storage:
-*>
-*>                 DO 20, J = 1, N
-*>                    K = KU + 1 - J
-*>                    DO 10, I = MAX( 1, J - KU ), MIN( M, J + KL )
-*>                       A( K + I, J ) = matrix( I, J )
-*>              10    CONTINUE
-*>              20 CONTINUE
+*>           Before entry, the leading m by n part of the array A must
+*>           contain the matrix of coefficients.
 *> \endverbatim
 *>
 *> \param[in] LDA
@@ -111,7 +81,7 @@
 *>          LDA is INTEGER
 *>           On entry, LDA specifies the first dimension of A as declared
 *>           in the calling (sub) program. LDA must be at least
-*>           ( kl + ku + 1 ).
+*>           max( 1, m ).
 *> \endverbatim
 *>
 *> \param[in] X
@@ -144,8 +114,9 @@
 *>           ( 1 + ( m - 1 )*abs( INCY ) ) when TRANS = 'N' or 'n'
 *>           and at least
 *>           ( 1 + ( n - 1 )*abs( INCY ) ) otherwise.
-*>           Before entry, the incremented array Y must contain the
-*>           vector y. On exit, Y is overwritten by the updated vector y.
+*>           Before entry with BETA non-zero, the incremented array Y
+*>           must contain the vector y. On exit, Y is overwritten by the
+*>           updated vector y.
 *> \endverbatim
 *>
 *> \param[in] INCY
@@ -183,7 +154,9 @@
 *> \endverbatim
 *>
 *  =====================================================================
-      SUBROUTINE DGBMV(TRANS,M,N,KL,KU,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+      SUBROUTINE RGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+
+      USE RP_EMULATOR
 *
 *  -- Reference BLAS level2 routine (version 3.6.0) --
 *  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -191,23 +164,22 @@
 *     November 2015
 *
 *     .. Scalar Arguments ..
-      DOUBLE PRECISION ALPHA,BETA
-      INTEGER INCX,INCY,KL,KU,LDA,M,N
+      TYPE(RPE_VAR) ALPHA,BETA
+      INTEGER INCX,INCY,LDA,M,N
       CHARACTER TRANS
 *     ..
 *     .. Array Arguments ..
-      DOUBLE PRECISION A(LDA,*),X(*),Y(*)
+      TYPE(RPE_VAR) A(LDA,*),X(*),Y(*)
 *     ..
 *
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION ONE,ZERO
-      PARAMETER (ONE=1.0D+0,ZERO=0.0D+0)
+      TYPE(RPE_VAR) ONE,ZERO
 *     ..
 *     .. Local Scalars ..
-      DOUBLE PRECISION TEMP
-      INTEGER I,INFO,IX,IY,J,JX,JY,K,KUP1,KX,KY,LENX,LENY
+      TYPE(RPE_VAR) TEMP
+      INTEGER I,INFO,IX,IY,J,JX,JY,KX,KY,LENX,LENY
 *     ..
 *     .. External Functions ..
       LOGICAL LSAME
@@ -216,9 +188,9 @@
 *     .. External Subroutines ..
       EXTERNAL XERBLA
 *     ..
-*     .. Intrinsic Functions ..
-      INTRINSIC MAX,MIN
-*     ..
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *
 *     Test the input parameters.
 *
@@ -230,19 +202,15 @@
           INFO = 2
       ELSE IF (N.LT.0) THEN
           INFO = 3
-      ELSE IF (KL.LT.0) THEN
-          INFO = 4
-      ELSE IF (KU.LT.0) THEN
-          INFO = 5
-      ELSE IF (LDA.LT. (KL+KU+1)) THEN
-          INFO = 8
+      ELSE IF (LDA.LT.MAX(1,M)) THEN
+          INFO = 6
       ELSE IF (INCX.EQ.0) THEN
-          INFO = 10
+          INFO = 8
       ELSE IF (INCY.EQ.0) THEN
-          INFO = 13
+          INFO = 11
       END IF
       IF (INFO.NE.0) THEN
-          CALL XERBLA('DGBMV ',INFO)
+          CALL XERBLA('RGEMV ',INFO)
           RETURN
       END IF
 *
@@ -273,7 +241,7 @@
       END IF
 *
 *     Start the operations. In this version the elements of A are
-*     accessed sequentially with one pass through the band part of A.
+*     accessed sequentially with one pass through A.
 *
 *     First form  y := beta*y.
 *
@@ -304,7 +272,6 @@
           END IF
       END IF
       IF (ALPHA.EQ.ZERO) RETURN
-      KUP1 = KU + 1
       IF (LSAME(TRANS,'N')) THEN
 *
 *        Form  y := alpha*A*x + y.
@@ -313,9 +280,8 @@
           IF (INCY.EQ.1) THEN
               DO 60 J = 1,N
                   TEMP = ALPHA*X(JX)
-                  K = KUP1 - J
-                  DO 50 I = MAX(1,J-KU),MIN(M,J+KL)
-                      Y(I) = Y(I) + TEMP*A(K+I,J)
+                  DO 50 I = 1,M
+                      Y(I) = Y(I) + TEMP*A(I,J)
    50             CONTINUE
                   JX = JX + INCX
    60         CONTINUE
@@ -323,13 +289,11 @@
               DO 80 J = 1,N
                   TEMP = ALPHA*X(JX)
                   IY = KY
-                  K = KUP1 - J
-                  DO 70 I = MAX(1,J-KU),MIN(M,J+KL)
-                      Y(IY) = Y(IY) + TEMP*A(K+I,J)
+                  DO 70 I = 1,M
+                      Y(IY) = Y(IY) + TEMP*A(I,J)
                       IY = IY + INCY
    70             CONTINUE
                   JX = JX + INCX
-                  IF (J.GT.KU) KY = KY + INCY
    80         CONTINUE
           END IF
       ELSE
@@ -340,9 +304,8 @@
           IF (INCX.EQ.1) THEN
               DO 100 J = 1,N
                   TEMP = ZERO
-                  K = KUP1 - J
-                  DO 90 I = MAX(1,J-KU),MIN(M,J+KL)
-                      TEMP = TEMP + A(K+I,J)*X(I)
+                  DO 90 I = 1,M
+                      TEMP = TEMP + A(I,J)*X(I)
    90             CONTINUE
                   Y(JY) = Y(JY) + ALPHA*TEMP
                   JY = JY + INCY
@@ -351,20 +314,18 @@
               DO 120 J = 1,N
                   TEMP = ZERO
                   IX = KX
-                  K = KUP1 - J
-                  DO 110 I = MAX(1,J-KU),MIN(M,J+KL)
-                      TEMP = TEMP + A(K+I,J)*X(IX)
+                  DO 110 I = 1,M
+                      TEMP = TEMP + A(I,J)*X(IX)
                       IX = IX + INCX
   110             CONTINUE
                   Y(JY) = Y(JY) + ALPHA*TEMP
                   JY = JY + INCY
-                  IF (J.GT.KU) KX = KX + INCX
   120         CONTINUE
           END IF
       END IF
 *
       RETURN
 *
-*     End of DGBMV .
+*     End of RGEMV .
 *
       END

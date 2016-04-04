@@ -61,12 +61,17 @@
 *> \ingroup auxOTHERauxiliary
 *
 *  =====================================================================
-      DOUBLE PRECISION FUNCTION RLAMCH( CMACH )
+      FUNCTION RLAMCH( CMACH )
+
+      USE RP_EMULATOR
 *
 *  -- LAPACK auxiliary routine (version 3.6.0) --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
 *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 *     November 2015
+
+*     .. Return Type
+      TYPE(RPE_VAR) RLMAMCH
 *
 *     .. Scalar Arguments ..
       CHARACTER          CMACH
@@ -75,8 +80,7 @@
 * =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION   ONE, ZERO
-      PARAMETER          ( ONE = 1.0D+0, ZERO = 0.0D+0 )
+      TYPE(RPE_VAR)   ONE, ZERO
 *     ..
 *     .. Local Scalars ..
       DOUBLE PRECISION   RND, EPS, SFMIN, SMALL, RMACH
@@ -85,9 +89,9 @@
       LOGICAL            LSAME
       EXTERNAL           LSAME
 *     ..
-*     .. Intrinsic Functions ..
-      INTRINSIC          DIGITS, EPSILON, HUGE, MAXEXPONENT,
-     $                   MINEXPONENT, RADIX, TINY
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *     ..
 *     .. Executable Statements ..
 *
@@ -102,39 +106,17 @@
          EPS = EPSILON(ZERO)
       END IF
 *
-      IF( LSAME( CMACH, 'E' ) ) THEN
-         RMACH = EPS
-      ELSE IF( LSAME( CMACH, 'S' ) ) THEN
-         SFMIN = TINY(ZERO)
-         SMALL = ONE / HUGE(ZERO)
-         IF( SMALL.GE.SFMIN ) THEN
+      SFMIN = TINY(ZERO)
+      SMALL = ONE / HUGE(ZERO)
+      IF( SMALL.GE.SFMIN ) THEN
 *
-*           Use SMALL plus a bit, to avoid the possibility of rounding
-*           causing overflow when computing  1/sfmin.
+*        Use SMALL plus a bit, to avoid the possibility of rounding
+*        causing overflow when computing  1/sfmin.
 *
-            SFMIN = SMALL*( ONE+EPS )
-         END IF
-         RMACH = SFMIN
-      ELSE IF( LSAME( CMACH, 'B' ) ) THEN
-         RMACH = RADIX(ZERO)
-      ELSE IF( LSAME( CMACH, 'P' ) ) THEN
-         RMACH = EPS * RADIX(ZERO)
-      ELSE IF( LSAME( CMACH, 'N' ) ) THEN
-         RMACH = DIGITS(ZERO)
-      ELSE IF( LSAME( CMACH, 'R' ) ) THEN
-         RMACH = RND
-      ELSE IF( LSAME( CMACH, 'M' ) ) THEN
-         RMACH = MINEXPONENT(ZERO)
-      ELSE IF( LSAME( CMACH, 'U' ) ) THEN
-         RMACH = tiny(zero)
-      ELSE IF( LSAME( CMACH, 'L' ) ) THEN
-         RMACH = MAXEXPONENT(ZERO)
-      ELSE IF( LSAME( CMACH, 'O' ) ) THEN
-         RMACH = HUGE(ZERO)
-      ELSE
-         RMACH = ZERO
+         SFMIN = SMALL*( ONE+EPS )
       END IF
-*
+      RMACH = SFMIN
+
       RLAMCH = RMACH
       RETURN
 *

@@ -126,8 +126,7 @@
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION   ONE, ZERO
-      PARAMETER( ONE = 1.0d+0, ZERO = 0.0d+0 )
+      TYPE(RPE_VAR)   ONE, ZERO
 *     ..
 *     .. Local Scalars ..
       TYPE(RPE_VAR)   SFMIN, TEMP
@@ -139,10 +138,14 @@
       EXTERNAL           RLAMCH, IDAMAX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DGEMM, DSCAL, RLASWP, DTRSM, XERBLA
+      EXTERNAL           RGEMM, RSCAL, RLASWP, RTRSM, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       !INTRINSIC          MAX, MIN
+*    
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *     ..
 *     .. Executable Statements ..
 *
@@ -201,7 +204,7 @@
 *           Compute elements 2:M of the column
 *
             IF( ABS(A( 1, 1 )) .GE. SFMIN ) THEN
-               CALL DSCAL( M-1, ONE / A( 1, 1 ), A( 2, 1 ), 1 )
+               CALL RSCAL( M-1, ONE / A( 1, 1 ), A( 2, 1 ), 1 )
             ELSE
                DO 10 I = 1, M-1
                   A( 1+I, 1 ) = A( 1+I, 1 ) / A( 1, 1 )
@@ -236,12 +239,12 @@
 *
 *        Solve A12
 *
-         CALL DTRSM( 'L', 'L', 'N', 'U', N1, N2, ONE, A, LDA, 
+         CALL RTRSM( 'L', 'L', 'N', 'U', N1, N2, ONE, A, LDA, 
      $               A( 1, N1+1 ), LDA )
 *
 *        Update A22
 *
-         CALL DGEMM( 'N', 'N', M-N1, N2, N1, -ONE, A( N1+1, 1 ), LDA, 
+         CALL RGEMM( 'N', 'N', M-N1, N2, N1, -ONE, A( N1+1, 1 ), LDA, 
      $               A( 1, N1+1 ), LDA, ONE, A( N1+1, N1+1 ), LDA )
 *
 *        Factor A22

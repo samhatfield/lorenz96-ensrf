@@ -1,4 +1,4 @@
-*> \brief \b DTRSM
+*> \brief \b RTRSM
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,7 +8,7 @@
 *  Definition:
 *  ===========
 *
-*       SUBROUTINE DTRSM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
+*       SUBROUTINE RTRSM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
 * 
 *       .. Scalar Arguments ..
 *       DOUBLE PRECISION ALPHA
@@ -25,7 +25,7 @@
 *>
 *> \verbatim
 *>
-*> DTRSM  solves one of the matrix equations
+*> RTRSM  solves one of the matrix equations
 *>
 *>    op( A )*X = alpha*B,   or   X*op( A ) = alpha*B,
 *>
@@ -179,7 +179,9 @@
 *> \endverbatim
 *>
 *  =====================================================================
-      SUBROUTINE DTRSM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
+      SUBROUTINE RTRSM(SIDE,UPLO,TRANSA,DIAG,M,N,ALPHA,A,LDA,B,LDB)
+
+      USE RP_EMULATOR
 *
 *  -- Reference BLAS level3 routine (version 3.4.0) --
 *  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -187,12 +189,12 @@
 *     November 2011
 *
 *     .. Scalar Arguments ..
-      DOUBLE PRECISION ALPHA
+      TYPE(RPE_VAR) ALPHA
       INTEGER LDA,LDB,M,N
       CHARACTER DIAG,SIDE,TRANSA,UPLO
 *     ..
 *     .. Array Arguments ..
-      DOUBLE PRECISION A(LDA,*),B(LDB,*)
+      TYPE(RPE_VAR) A(LDA,*),B(LDB,*)
 *     ..
 *
 *  =====================================================================
@@ -204,17 +206,16 @@
 *     .. External Subroutines ..
       EXTERNAL XERBLA
 *     ..
-*     .. Intrinsic Functions ..
-      INTRINSIC MAX
-*     ..
 *     .. Local Scalars ..
-      DOUBLE PRECISION TEMP
+      TYPE(RPE_VAR) TEMP
       INTEGER I,INFO,J,K,NROWA
       LOGICAL LSIDE,NOUNIT,UPPER
 *     ..
 *     .. Parameters ..
-      DOUBLE PRECISION ONE,ZERO
-      PARAMETER (ONE=1.0D+0,ZERO=0.0D+0)
+      TYPE(RPE_VAR) ONE,ZERO
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *     ..
 *
 *     Test the input parameters.
@@ -249,7 +250,7 @@
           INFO = 11
       END IF
       IF (INFO.NE.0) THEN
-          CALL XERBLA('DTRSM ',INFO)
+          CALL XERBLA('RTRSM ',INFO)
           RETURN
       END IF
 *
@@ -438,6 +439,6 @@
 *
       RETURN
 *
-*     End of DTRSM .
+*     End of RTRSM .
 *
       END

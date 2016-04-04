@@ -113,6 +113,8 @@
 *
 *  =====================================================================
       SUBROUTINE RGETRI( N, A, LDA, IPIV, WORK, LWORK, INFO )
+
+      USE RP_EMULATOR
 *
 *  -- LAPACK computational routine (version 3.4.0) --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -124,14 +126,13 @@
 *     ..
 *     .. Array Arguments ..
       INTEGER            IPIV( * )
-      DOUBLE PRECISION   A( LDA, * ), WORK( * )
+      TYPE(RPE_VAR)   A( LDA, * ), WORK( * )
 *     ..
 *
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION   ZERO, ONE
-      PARAMETER          ( ZERO = 0.0D+0, ONE = 1.0D+0 )
+      TYPE(RPE_VAR)   ZERO, ONE
 *     ..
 *     .. Local Scalars ..
       LOGICAL            LQUERY
@@ -143,11 +144,11 @@
       EXTERNAL           ILAENV
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DGEMM, DGEMV, DSWAP, DTRSM, RTRTRI, XERBLA
+      EXTERNAL           RGEMM, RGEMV, RSWAP, RTRSM, RTRTRI, XERBLA
 *     ..
-*     .. Intrinsic Functions ..
-      INTRINSIC          MAX, MIN
-*     ..
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
@@ -213,7 +214,7 @@
 *           Compute current column of inv(A).
 *
             IF( J.LT.N )
-     $         CALL DGEMV( 'No transpose', N, N-J, -ONE, A( 1, J+1 ),
+     $         CALL RGEMV( 'No transpose', N, N-J, -ONE, A( 1, J+1 ),
      $                     LDA, WORK( J+1 ), 1, ONE, A( 1, J ), 1 )
    20    CONTINUE
       ELSE
@@ -237,10 +238,10 @@
 *           Compute current block column of inv(A).
 *
             IF( J+JB.LE.N )
-     $         CALL DGEMM( 'No transpose', 'No transpose', N, JB,
+     $         CALL RGEMM( 'No transpose', 'No transpose', N, JB,
      $                     N-J-JB+1, -ONE, A( 1, J+JB ), LDA,
      $                     WORK( J+JB ), LDWORK, ONE, A( 1, J ), LDA )
-            CALL DTRSM( 'Right', 'Lower', 'No transpose', 'Unit', N, JB,
+            CALL RTRSM( 'Right', 'Lower', 'No transpose', 'Unit', N, JB,
      $                  ONE, WORK( J ), LDWORK, A( 1, J ), LDA )
    50    CONTINUE
       END IF
@@ -250,7 +251,7 @@
       DO 60 J = N - 1, 1, -1
          JP = IPIV( J )
          IF( JP.NE.J )
-     $      CALL DSWAP( N, A( 1, J ), 1, A( 1, JP ), 1 )
+     $      CALL RSWAP( N, A( 1, J ), 1, A( 1, JP ), 1 )
    60 CONTINUE
 *
       WORK( 1 ) = IWS

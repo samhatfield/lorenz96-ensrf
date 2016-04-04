@@ -112,14 +112,11 @@
       INTEGER            I, IINFO, J, JB, NB
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DGEMM, RGETRF2, RLASWP, DTRSM, XERBLA
+      EXTERNAL           RGEMM, RGETRF2, RLASWP, RTRSM, XERBLA
 *     ..
 *     .. External Functions ..
       INTEGER            ILAENV
       EXTERNAL           ILAENV
-*     ..
-*     .. Intrinsic Functions ..
-      !INTRINSIC          MAX, MIN
 *     ..
 *     .. Executable Statements ..
 *
@@ -182,14 +179,14 @@
 *
 *              Compute block row of U.
 *
-               CALL DTRSM( 'Left', 'Lower', 'No transpose', 'Unit', JB,
+               CALL RTRSM( 'Left', 'Lower', 'No transpose', 'Unit', JB,
      $                     M-J-JB+1, ONE, A( J, J ), LDA, A( J, J+JB ),
      $                     LDA )
                IF( J+JB.LE.M ) THEN
 *
 *                 Update trailing submatrix.
 *
-                  CALL DGEMM( 'No transpose', 'No transpose', M-J-JB+1,
+                  CALL RGEMM( 'No transpose', 'No transpose', M-J-JB+1,
      $                        M-J-JB+1, JB, -ONE, A( J+JB, J ), LDA,
      $                        A( J, J+JB ), LDA, ONE, A( J+JB, J+JB ),
      $                        LDA )

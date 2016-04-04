@@ -108,6 +108,8 @@
 *
 *  =====================================================================
       SUBROUTINE RTRTRI( UPLO, DIAG, N, A, LDA, INFO )
+
+      USE RP_EMULATOR
 *
 *  -- LAPACK computational routine (version 3.4.0) --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -119,14 +121,13 @@
       INTEGER            INFO, LDA, N
 *     ..
 *     .. Array Arguments ..
-      DOUBLE PRECISION   A( LDA, * )
+      TYPE(RPE_VAR)   A( LDA, * )
 *     ..
 *
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION   ONE, ZERO
-      PARAMETER          ( ONE = 1.0D+0, ZERO = 0.0D+0 )
+      TYPE(RPE_VAR)   ONE, ZERO
 *     ..
 *     .. Local Scalars ..
       LOGICAL            NOUNIT, UPPER
@@ -138,11 +139,11 @@
       EXTERNAL           LSAME, ILAENV
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DTRMM, DTRSM, RTRTI2, XERBLA
+      EXTERNAL           RTRMM, RTRSM, RTRTI2, XERBLA
 *     ..
-*     .. Intrinsic Functions ..
-      INTRINSIC          MAX, MIN
-*     ..
+*     .. Intialise parameters
+      ONE = 1.0d+0
+      ZERO = 0.0d+0
 *     .. Executable Statements ..
 *
 *     Test the input parameters.
@@ -200,9 +201,9 @@
 *
 *              Compute rows 1:j-1 of current block column
 *
-               CALL DTRMM( 'Left', 'Upper', 'No transpose', DIAG, J-1,
+               CALL RTRMM( 'Left', 'Upper', 'No transpose', DIAG, J-1,
      $                     JB, ONE, A, LDA, A( 1, J ), LDA )
-               CALL DTRSM( 'Right', 'Upper', 'No transpose', DIAG, J-1,
+               CALL RTRSM( 'Right', 'Upper', 'No transpose', DIAG, J-1,
      $                     JB, -ONE, A( J, J ), LDA, A( 1, J ), LDA )
 *
 *              Compute inverse of current diagonal block
@@ -220,10 +221,10 @@
 *
 *                 Compute rows j+jb:n of current block column
 *
-                  CALL DTRMM( 'Left', 'Lower', 'No transpose', DIAG,
+                  CALL RTRMM( 'Left', 'Lower', 'No transpose', DIAG,
      $                        N-J-JB+1, JB, ONE, A( J+JB, J+JB ), LDA,
      $                        A( J+JB, J ), LDA )
-                  CALL DTRSM( 'Right', 'Lower', 'No transpose', DIAG,
+                  CALL RTRSM( 'Right', 'Lower', 'No transpose', DIAG,
      $                        N-J-JB+1, JB, -ONE, A( J, J ), LDA,
      $                        A( J+JB, J ), LDA )
                END IF

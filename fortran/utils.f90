@@ -1,5 +1,6 @@
 module utils
     use params, only: dp, n_x, n_y
+    use rp_emulator
 
     implicit none
 
@@ -36,9 +37,9 @@ module utils
         ! Matrix inverter based on LU decomposition
         ! Depends on LAPACK
         function inv(m) result(m_inv)
-            real(dp), dimension(:,:), intent(in) :: m
-            real(dp), dimension(size(m, 1), size(m, 2)) :: m_inv
-            real(dp), dimension(size(m, 1)) :: work
+            type(rpe_var), dimension(:,:), intent(in) :: m
+            type(rpe_var), dimension(size(m, 1), size(m, 2)) :: m_inv
+            type(rpe_var), dimension(size(m, 1)) :: work
             integer, dimension(size(m, 1)) :: ipiv
             integer :: n, info
 

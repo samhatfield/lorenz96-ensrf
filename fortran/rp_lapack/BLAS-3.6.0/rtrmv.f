@@ -1,4 +1,4 @@
-*> \brief \b DTPMV
+*> \brief \b RTRMV
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,14 +8,14 @@
 *  Definition:
 *  ===========
 *
-*       SUBROUTINE DTPMV(UPLO,TRANS,DIAG,N,AP,X,INCX)
+*       SUBROUTINE RTRMV(UPLO,TRANS,DIAG,N,A,LDA,X,INCX)
 * 
 *       .. Scalar Arguments ..
-*       INTEGER INCX,N
+*       INTEGER INCX,LDA,N
 *       CHARACTER DIAG,TRANS,UPLO
 *       ..
 *       .. Array Arguments ..
-*       DOUBLE PRECISION AP(*),X(*)
+*       DOUBLE PRECISION A(LDA,*),X(*)
 *       ..
 *  
 *
@@ -24,12 +24,12 @@
 *>
 *> \verbatim
 *>
-*> DTPMV  performs one of the matrix-vector operations
+*> RTRMV  performs one of the matrix-vector operations
 *>
 *>    x := A*x,   or   x := A**T*x,
 *>
 *> where x is an n element vector and  A is an n by n unit, or non-unit,
-*> upper or lower triangular matrix, supplied in packed form.
+*> upper or lower triangular matrix.
 *> \endverbatim
 *
 *  Arguments:
@@ -78,22 +78,27 @@
 *>           N must be at least zero.
 *> \endverbatim
 *>
-*> \param[in] AP
+*> \param[in] A
 *> \verbatim
-*>          AP is DOUBLE PRECISION array of DIMENSION at least
-*>           ( ( n*( n + 1 ) )/2 ).
-*>           Before entry with  UPLO = 'U' or 'u', the array AP must
-*>           contain the upper triangular matrix packed sequentially,
-*>           column by column, so that AP( 1 ) contains a( 1, 1 ),
-*>           AP( 2 ) and AP( 3 ) contain a( 1, 2 ) and a( 2, 2 )
-*>           respectively, and so on.
-*>           Before entry with UPLO = 'L' or 'l', the array AP must
-*>           contain the lower triangular matrix packed sequentially,
-*>           column by column, so that AP( 1 ) contains a( 1, 1 ),
-*>           AP( 2 ) and AP( 3 ) contain a( 2, 1 ) and a( 3, 1 )
-*>           respectively, and so on.
+*>          A is DOUBLE PRECISION array of DIMENSION ( LDA, n ).
+*>           Before entry with  UPLO = 'U' or 'u', the leading n by n
+*>           upper triangular part of the array A must contain the upper
+*>           triangular matrix and the strictly lower triangular part of
+*>           A is not referenced.
+*>           Before entry with UPLO = 'L' or 'l', the leading n by n
+*>           lower triangular part of the array A must contain the lower
+*>           triangular matrix and the strictly upper triangular part of
+*>           A is not referenced.
 *>           Note that when  DIAG = 'U' or 'u', the diagonal elements of
-*>           A are not referenced, but are assumed to be unity.
+*>           A are not referenced either, but are assumed to be unity.
+*> \endverbatim
+*>
+*> \param[in] LDA
+*> \verbatim
+*>          LDA is INTEGER
+*>           On entry, LDA specifies the first dimension of A as declared
+*>           in the calling (sub) program. LDA must be at least
+*>           max( 1, n ).
 *> \endverbatim
 *>
 *> \param[in,out] X
@@ -140,7 +145,9 @@
 *> \endverbatim
 *>
 *  =====================================================================
-      SUBROUTINE DTPMV(UPLO,TRANS,DIAG,N,AP,X,INCX)
+      SUBROUTINE RTRMV(UPLO,TRANS,DIAG,N,A,LDA,X,INCX)
+
+      USE RP_EMULATOR
 *
 *  -- Reference BLAS level2 routine (version 3.4.0) --
 *  -- Reference BLAS is a software package provided by Univ. of Tennessee,    --
@@ -148,22 +155,21 @@
 *     November 2011
 *
 *     .. Scalar Arguments ..
-      INTEGER INCX,N
+      INTEGER INCX,LDA,N
       CHARACTER DIAG,TRANS,UPLO
 *     ..
 *     .. Array Arguments ..
-      DOUBLE PRECISION AP(*),X(*)
+      TYPE(RPE_VAR) A(LDA,*),X(*)
 *     ..
 *
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION ZERO
-      PARAMETER (ZERO=0.0D+0)
+      TYPE(RPE_VAR) ZERO
 *     ..
 *     .. Local Scalars ..
-      DOUBLE PRECISION TEMP
-      INTEGER I,INFO,IX,J,JX,K,KK,KX
+      TYPE(RPE_VAR) TEMP
+      INTEGER I,INFO,IX,J,JX,KX
       LOGICAL NOUNIT
 *     ..
 *     .. External Functions ..
@@ -173,6 +179,8 @@
 *     .. External Subroutines ..
       EXTERNAL XERBLA
 *     ..
+*     .. Intialise parameters
+      ZERO = 0.0d+0
 *
 *     Test the input parameters.
 *
@@ -186,11 +194,13 @@
           INFO = 3
       ELSE IF (N.LT.0) THEN
           INFO = 4
+      ELSE IF (LDA.LT.MAX(1,N)) THEN
+          INFO = 6
       ELSE IF (INCX.EQ.0) THEN
-          INFO = 7
+          INFO = 8
       END IF
       IF (INFO.NE.0) THEN
-          CALL XERBLA('DTPMV ',INFO)
+          CALL XERBLA('RTRMV ',INFO)
           RETURN
       END IF
 *
@@ -209,27 +219,23 @@
           KX = 1
       END IF
 *
-*     Start the operations. In this version the elements of AP are
-*     accessed sequentially with one pass through AP.
+*     Start the operations. In this version the elements of A are
+*     accessed sequentially with one pass through A.
 *
       IF (LSAME(TRANS,'N')) THEN
 *
-*        Form  x:= A*x.
+*        Form  x := A*x.
 *
           IF (LSAME(UPLO,'U')) THEN
-              KK = 1
               IF (INCX.EQ.1) THEN
                   DO 20 J = 1,N
                       IF (X(J).NE.ZERO) THEN
                           TEMP = X(J)
-                          K = KK
                           DO 10 I = 1,J - 1
-                              X(I) = X(I) + TEMP*AP(K)
-                              K = K + 1
+                              X(I) = X(I) + TEMP*A(I,J)
    10                     CONTINUE
-                          IF (NOUNIT) X(J) = X(J)*AP(KK+J-1)
+                          IF (NOUNIT) X(J) = X(J)*A(J,J)
                       END IF
-                      KK = KK + J
    20             CONTINUE
               ELSE
                   JX = KX
@@ -237,30 +243,25 @@
                       IF (X(JX).NE.ZERO) THEN
                           TEMP = X(JX)
                           IX = KX
-                          DO 30 K = KK,KK + J - 2
-                              X(IX) = X(IX) + TEMP*AP(K)
+                          DO 30 I = 1,J - 1
+                              X(IX) = X(IX) + TEMP*A(I,J)
                               IX = IX + INCX
    30                     CONTINUE
-                          IF (NOUNIT) X(JX) = X(JX)*AP(KK+J-1)
+                          IF (NOUNIT) X(JX) = X(JX)*A(J,J)
                       END IF
                       JX = JX + INCX
-                      KK = KK + J
    40             CONTINUE
               END IF
           ELSE
-              KK = (N* (N+1))/2
               IF (INCX.EQ.1) THEN
                   DO 60 J = N,1,-1
                       IF (X(J).NE.ZERO) THEN
                           TEMP = X(J)
-                          K = KK
                           DO 50 I = N,J + 1,-1
-                              X(I) = X(I) + TEMP*AP(K)
-                              K = K - 1
+                              X(I) = X(I) + TEMP*A(I,J)
    50                     CONTINUE
-                          IF (NOUNIT) X(J) = X(J)*AP(KK-N+J)
+                          IF (NOUNIT) X(J) = X(J)*A(J,J)
                       END IF
-                      KK = KK - (N-J+1)
    60             CONTINUE
               ELSE
                   KX = KX + (N-1)*INCX
@@ -269,14 +270,13 @@
                       IF (X(JX).NE.ZERO) THEN
                           TEMP = X(JX)
                           IX = KX
-                          DO 70 K = KK,KK - (N- (J+1)),-1
-                              X(IX) = X(IX) + TEMP*AP(K)
+                          DO 70 I = N,J + 1,-1
+                              X(IX) = X(IX) + TEMP*A(I,J)
                               IX = IX - INCX
    70                     CONTINUE
-                          IF (NOUNIT) X(JX) = X(JX)*AP(KK-N+J)
+                          IF (NOUNIT) X(JX) = X(JX)*A(J,J)
                       END IF
                       JX = JX - INCX
-                      KK = KK - (N-J+1)
    80             CONTINUE
               END IF
           END IF
@@ -285,61 +285,51 @@
 *        Form  x := A**T*x.
 *
           IF (LSAME(UPLO,'U')) THEN
-              KK = (N* (N+1))/2
               IF (INCX.EQ.1) THEN
                   DO 100 J = N,1,-1
                       TEMP = X(J)
-                      IF (NOUNIT) TEMP = TEMP*AP(KK)
-                      K = KK - 1
+                      IF (NOUNIT) TEMP = TEMP*A(J,J)
                       DO 90 I = J - 1,1,-1
-                          TEMP = TEMP + AP(K)*X(I)
-                          K = K - 1
+                          TEMP = TEMP + A(I,J)*X(I)
    90                 CONTINUE
                       X(J) = TEMP
-                      KK = KK - J
   100             CONTINUE
               ELSE
                   JX = KX + (N-1)*INCX
                   DO 120 J = N,1,-1
                       TEMP = X(JX)
                       IX = JX
-                      IF (NOUNIT) TEMP = TEMP*AP(KK)
-                      DO 110 K = KK - 1,KK - J + 1,-1
+                      IF (NOUNIT) TEMP = TEMP*A(J,J)
+                      DO 110 I = J - 1,1,-1
                           IX = IX - INCX
-                          TEMP = TEMP + AP(K)*X(IX)
+                          TEMP = TEMP + A(I,J)*X(IX)
   110                 CONTINUE
                       X(JX) = TEMP
                       JX = JX - INCX
-                      KK = KK - J
   120             CONTINUE
               END IF
           ELSE
-              KK = 1
               IF (INCX.EQ.1) THEN
                   DO 140 J = 1,N
                       TEMP = X(J)
-                      IF (NOUNIT) TEMP = TEMP*AP(KK)
-                      K = KK + 1
+                      IF (NOUNIT) TEMP = TEMP*A(J,J)
                       DO 130 I = J + 1,N
-                          TEMP = TEMP + AP(K)*X(I)
-                          K = K + 1
+                          TEMP = TEMP + A(I,J)*X(I)
   130                 CONTINUE
                       X(J) = TEMP
-                      KK = KK + (N-J+1)
   140             CONTINUE
               ELSE
                   JX = KX
                   DO 160 J = 1,N
                       TEMP = X(JX)
                       IX = JX
-                      IF (NOUNIT) TEMP = TEMP*AP(KK)
-                      DO 150 K = KK + 1,KK + N - J
+                      IF (NOUNIT) TEMP = TEMP*A(J,J)
+                      DO 150 I = J + 1,N
                           IX = IX + INCX
-                          TEMP = TEMP + AP(K)*X(IX)
+                          TEMP = TEMP + A(I,J)*X(IX)
   150                 CONTINUE
                       X(JX) = TEMP
                       JX = JX + INCX
-                      KK = KK + (N-J+1)
   160             CONTINUE
               END IF
           END IF
@@ -347,6 +337,6 @@
 *
       RETURN
 *
-*     End of DTPMV .
+*     End of RTRMV .
 *
       END
