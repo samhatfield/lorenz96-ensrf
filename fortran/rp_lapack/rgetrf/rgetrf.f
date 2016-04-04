@@ -105,8 +105,7 @@
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION   ONE
-      PARAMETER          ( ONE = 1.0D+0 )
+      TYPE(RPE_VAR)   ONE
 *     ..
 *     .. Local Scalars ..
       INTEGER            I, IINFO, J, JB, NB
@@ -118,6 +117,8 @@
       INTEGER            ILAENV
       EXTERNAL           ILAENV
 *     ..
+*     .. Intialise parameters
+      ONE = 1.0d+0
 *     .. Executable Statements ..
 *
 *     Test the input parameters.

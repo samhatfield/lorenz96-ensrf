@@ -83,7 +83,7 @@
       TYPE(RPE_VAR)   ONE, ZERO
 *     ..
 *     .. Local Scalars ..
-      DOUBLE PRECISION   RND, EPS, SFMIN, SMALL, RMACH
+      TYPE(RPE_VAR)   RND, EPS, SFMIN, SMALL, RMACH
 *     ..
 *     .. External Functions ..
       LOGICAL            LSAME

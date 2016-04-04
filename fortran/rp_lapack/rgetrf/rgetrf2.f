@@ -133,7 +133,7 @@
       INTEGER            I, IINFO, N1, N2
 *     ..
 *     .. External Functions ..
-      DOUBLE PRECISION   RLAMCH
+      TYPE(RPE_VAR)   RLAMCH
       INTEGER            IDAMAX
       EXTERNAL           RLAMCH, IDAMAX
 *     ..
