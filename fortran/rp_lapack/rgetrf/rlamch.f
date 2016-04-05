@@ -147,14 +147,18 @@
 *>          The values A and B.
 *> \endverbatim
 *>
-      DOUBLE PRECISION FUNCTION DLAMC3( A, B )
+      FUNCTION RLAMC3( A, B )
+
+      USE RP_EMULATOR
 *
 *  -- LAPACK auxiliary routine (version 3.6.0) --
 *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
 *     November 2010
 *
 *     .. Scalar Arguments ..
-      DOUBLE PRECISION   A, B
+      TYPE(RPE_VAR)   A, B
+
+      TYPE(RPE_VAR) RLAMC3
 *     ..
 * =====================================================================
 *

@@ -140,8 +140,6 @@
 *     .. External Subroutines ..
       EXTERNAL           RGEMM, RSCAL, RLASWP, RTRSM, XERBLA
 *     ..
-*     .. Intrinsic Functions ..
-      !INTRINSIC          MAX, MIN
 *    
 *     .. Intialise parameters
       ONE = 1.0d+0

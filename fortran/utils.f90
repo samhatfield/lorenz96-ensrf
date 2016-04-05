@@ -49,7 +49,7 @@ module utils
             m_inv = m
             n = size(m, 1)
 
-            call rgetrf(n, m_inv, n, ipiv, info)
+            call rgetrf(n, n, m_inv, n, ipiv, info)
 
             if (info > 0) then
                 stop 'Singular matrix!'
