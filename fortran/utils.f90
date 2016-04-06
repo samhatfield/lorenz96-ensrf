@@ -1,8 +1,12 @@
 module utils
     use params, only: dp, n_x, n_y
-    use rp_emulator
 
     implicit none
+
+    public :: inv
+    interface inv
+        module procedure inv
+    end interface inv     
 
     contains
         ! Generates a random number drawn for the specified normal distribution
@@ -37,19 +41,19 @@ module utils
         ! Matrix inverter based on LU decomposition
         ! Depends on LAPACK
         function inv(m) result(m_inv)
-            type(rpe_var), dimension(:,:), intent(in) :: m
-            type(rpe_var), dimension(size(m, 1), size(m, 2)) :: m_inv
-            type(rpe_var), dimension(size(m, 1)) :: work
+            real(dp), dimension(:,:), intent(in) :: m
+            real(dp), dimension(size(m, 1), size(m, 2)) :: m_inv
+            real(dp), dimension(size(m, 1)) :: work
             integer, dimension(size(m, 1)) :: ipiv
             integer :: n, info
 
-            external rgetrf
-            external rgetri
+            external dgetrf
+            external dgetri
 
             m_inv = m
             n = size(m, 1)
 
-            call rgetrf(n, n, m_inv, n, ipiv, info)
+            call dgetrf(n, n, m_inv, n, ipiv, info)
 
             if (info > 0) then
                 stop 'Singular matrix!'
@@ -57,7 +61,7 @@ module utils
                 stop 'Illegal argument to dgetrf'
             end if
 
-            call rgetri(n, m_inv, n, ipiv, work, n, info)
+            call dgetri(n, m_inv, n, ipiv, work, n, info)
 
             if (info /= 0) then
                 stop 'Matrix inversion failed'
