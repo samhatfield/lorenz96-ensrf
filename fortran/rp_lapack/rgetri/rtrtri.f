@@ -161,7 +161,7 @@
          INFO = -5
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'RTRTRI', -INFO )
+         CALL XERBLA( 'DTRTRI', -INFO )
          RETURN
       END IF
 *
@@ -182,7 +182,7 @@
 *
 *     Determine the block size for this environment.
 *
-      NB = ILAENV( 1, 'RTRTRI', UPLO // DIAG, N, -1, -1, -1 )
+      NB = ILAENV( 1, 'DTRTRI', UPLO // DIAG, N, -1, -1, -1 )
       IF( NB.LE.1 .OR. NB.GE.N ) THEN
 *
 *        Use unblocked code

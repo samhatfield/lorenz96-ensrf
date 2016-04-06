@@ -158,7 +158,7 @@
          INFO = -4
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'RGETRF2', -INFO )
+         CALL XERBLA( 'DGETRF2', -INFO )
          RETURN
       END IF
 *

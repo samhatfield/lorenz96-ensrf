@@ -161,7 +161,7 @@
          INFO = -5
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'RTRTI2', -INFO )
+         CALL XERBLA( 'DTRTI2', -INFO )
          RETURN
       END IF
 *
