@@ -83,7 +83,7 @@
       TYPE(RPE_VAR)   ONE, ZERO
 *     ..
 *     .. Local Scalars ..
-      TYPE(RPE_VAR)   RND, EPS, SFMIN, SMALL, RMACH
+      TYPE(RPE_VAR)   RND, EPS, SFMIN, SMALL, RMACH, LARGE
 *     ..
 *     .. External Functions ..
       LOGICAL            LSAME
@@ -92,6 +92,7 @@
 *     .. Intialise parameters
       ONE = 1.0d+0
       ZERO = 0.0d+0
+      LARGE = 2.0d+0**1023.0d+0
 *     ..
 *     .. Executable Statements ..
 *
@@ -106,12 +107,19 @@
          EPS = EPSILON(ZERO)
       END IF
 *
+*	  The large IF statement that used to be here has been removed, as
+*     this function will only ever be called with the 'S' option
       SFMIN = TINY(ZERO)
-      SMALL = ONE / HUGE(ZERO)
+	  ! Currently, the emulator returns infinity when calling HUGE(rpe_instance)
+	  ! Until a cleverer solution is figured out, just use a
+      ! conservative estimate for HUGE(rpe_var) (i.e. the max value for
+      ! no significand bits)
+      !SMALL = ONE / HUGE(ZERO)
+	  SMALL = ONE / LARGE
       IF( SMALL.GE.SFMIN ) THEN
 *
 *        Use SMALL plus a bit, to avoid the possibility of rounding
-*        causing overflow when computing  1/sfmin.
+*        causing overflow when computing  1/sfmin.`
 *
          SFMIN = SMALL*( ONE+EPS )
       END IF
