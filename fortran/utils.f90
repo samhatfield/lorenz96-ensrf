@@ -1,12 +1,35 @@
 module utils
     use params, only: dp, n_x, n_y
+    use rp_emulator
 
     implicit none
+
+    !===========================================================================
+    ! Overloaded functions
+    !=========================================================================== 
 
     public :: inv
     interface inv
         module procedure inv
-    end interface inv     
+        module procedure inv_rpe
+    end interface inv
+    
+    public :: randn
+    interface randn
+        module procedure randn
+        module procedure randn_rpe
+    end interface randn
+    
+    public :: additive_noise
+    interface additive_noise
+        module procedure additive_noise
+        module procedure additive_noise_rpe
+    end interface additive_noise
+
+    public :: matmul
+    interface matmul
+        module procedure matmul_rpe
+    end interface matmul
 
     contains
         ! Generates a random number drawn for the specified normal distribution
@@ -96,4 +119,114 @@ module utils
             
             e = phi * last + sqrt(1-phi**2) * z
         end function additive_noise
+        
+        !===========================================================================
+        ! Reduced precision utils
+        !=========================================================================== 
+        
+        ! Generates a random number drawn for the specified normal distribution
+        function randn_rpe(mean, stdev)
+            type(rpe_var), intent(in) :: mean, stdev
+            type(rpe_var) :: randn_rpe
+            
+            randn_rpe = randn(mean%val, stdev%val)
+        end function randn_rpe
+        
+        ! Matrix inverter based on LU decomposition
+        ! Depends on LAPACK
+        function inv_rpe(m) result(m_inv)
+            type(rpe_var), dimension(:,:), intent(in) :: m
+            type(rpe_var), dimension(size(m, 1), size(m, 2)) :: m_inv
+            type(rpe_var), dimension(size(m, 1)) :: work
+            integer, dimension(size(m, 1)) :: ipiv
+            integer :: n, info
+
+            external rgetrf
+            external rgetri
+
+            m_inv = m
+            n = size(m, 1)
+
+            call rgetrf(n, n, m_inv, n, ipiv, info)
+
+            if (info > 0) then
+                stop 'Singular matrix!'
+            else if (info < 0) then
+                stop 'Illegal argument to dgetrf'
+            end if
+
+            call rgetri(n, m_inv, n, ipiv, work, n, info)
+
+            if (info /= 0) then
+                stop 'Matrix inversion failed'
+            end if
+        end function inv_rpe
+        
+        ! Zero mean AR(1) process
+        function additive_noise_rpe(last) result(e)
+            type(rpe_var), dimension(n_x*n_y), intent(in) :: last
+            type(rpe_var), dimension(n_x*n_y) :: e
+            real(dp) :: phi = 0.997_dp
+            real(dp) :: sigma_e = 0.126_dp
+            real(dp), dimension(n_x*n_y) :: z
+            integer :: i
+            
+            do i = 1, n_x*n_y
+                z(i) = randn(0.0_dp, sigma_e)
+            end do
+            
+            e = phi * last + sqrt(1-phi**2) * z
+        end function additive_noise_rpe
+        
+        ! Reduced precision matrix multiplication
+        function matmul_rpe(mat1, mat2)
+            type(rpe_var), intent(in) :: mat1(:,:), mat2(:,:)
+            type(rpe_var) :: matmul_rpe(size(mat1, 1), size(mat2, 2))
+            integer :: m, n, u
+            integer :: i, j, k
+            
+            matmul_rpe(:,:) = 0.0d0
+            
+            m = size(mat1, 2)
+            n = size(mat1, 1)
+            u = size(mat2, 2)     
+            
+            do i = 1, u
+                do j = 1, n
+                    do k = 1, m
+                        matmul_rpe(j, i) = matmul_rpe(j, i) + mat1(j, k)*mat2(k, i)
+                    end do
+                end do
+            end do
+        end function matmul_rpe
+        
+        ! Reduced precision sum of 2D array (returns 1D array, with sum of elements
+        ! along 1st dimension)
+        pure function sum_2d_rpe(array)
+        	type(rpe_var), intent(in) :: array(:,:)
+        	type(rpe_var) :: sum_2d_rpe(size(array, 1))
+        	integer :: i, n
+        	
+        	n = size(array, 1)
+        	
+        	sum_2d_rpe(:) = 0.0d0
+        	
+        	do i = 1, n
+        		sum_2d_rpe = sum_2d_rpe + array(i, :)
+        	end do
+        end function sum_2d_rpe
+        
+        pure function sum_1d_rpe(array)
+        	type(rpe_var), intent(in) :: array(:)
+        	type(rpe_var) :: sum_1d_rpe
+        	integer :: i, n
+        	
+        	n = size(array)
+        	
+        	sum_1d_rpe = 0.0d0
+        	
+        	do i = 1, n
+        		sum_1d_rpe = sum_1d_rpe + array(i)
+        	end do
+        end function sum_1d_rpe
 end module utils

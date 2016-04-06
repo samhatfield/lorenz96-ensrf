@@ -4,6 +4,7 @@ program main
     use utils, only: randn, time_seed, additive_noise
     use analysis
     use metadata
+    use rp_emulator
 
     implicit none
 
