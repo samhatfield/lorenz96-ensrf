@@ -1,11 +1,30 @@
-all:
-	gfortran -c params.f90
-	gfortran -c utils.f90 -Irpe/modules
-	gfortran -c lorenz96.f90 -Irpe/modules
-	gfortran -c metadata.f90
-	gfortran -c *.f90 -Irpe/modules
-	gfortran -c rp_lapack/BLAS-3.6.0/*.f -Irpe/modules
-	gfortran -c rp_lapack/rgetrf/*.f rp_lapack/rgetri/*.f -Irpe/modules
-	gfortran -c lapack/dgetrf/*.f lapack/dgetri/*.f
-	gfortran -o main *.o -Lrpe/lib -lrpe -lblas
-	rm *.o *.mod
+# Default compiler
+FC = gfortran
+
+# LAPACK files required for full precision matrix inverse
+LAPACK = $(patsubst %.f,%.o,$(wildcard lapack/dgetrf/*.f lapack/dgetri/*.f))
+
+# Reduced precision LAPACK and BLAS files required for reduced precision matrix inverse
+RP_LAPACK = $(patsubst %.f,%.o,$(wildcard rp_lapack/rgetrf/*.f rp_lapack/rgetri/*.f))
+BLAS = $(patsubst %.f,%.o,$(wildcard rp_lapack/BLAS-3.6.0/*.f))
+
+# Main target: main executable
+main: main.o params.o lorenz96.o analysis.o metadata.o utils.o\
+	$(LAPACK) $(RP_LAPACK) $(BLAS)
+	$(FC) -o $@ $^ -lblas -lrpe -Lrpe/lib
+
+main.o: params.o lorenz96.o utils.o analysis.o metadata.o
+lorenz96.o: utils.o
+
+%.o: %.f90
+	$(FC) -c $< -Irpe/modules
+
+rp_lapack/rgetr%.o: rp_lapack/rgetr%.f
+	$(FC) -c -o $@ $< -Irpe/modules
+
+rp_lapack/BLAS-3.6.0/%.o: rp_lapack/BLAS-3.6.0/%.f
+	$(FC) -c -o $@ $< -Irpe/modules
+
+.PHONY: clean
+clean:
+	rm -f *.o *.mod $(LAPACK) $(RP_LAPACK) $(BLAS)
