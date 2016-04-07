@@ -33,4 +33,7 @@ module params
 
     ! Observe only Y variables
     integer, parameter :: obs_dim = n_x*n_y
+
+    ! Default significand
+    integer, parameter :: sbits = 15
 end module params

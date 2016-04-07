@@ -4,6 +4,12 @@ module analysis
 
     implicit none
 
+    public :: observe
+    interface observe
+        module procedure observe
+        module procedure observe_rpe
+    end interface observe
+
     contains
         pure function observe(state)
             real(dp), dimension(:, :), intent(in) :: state
@@ -11,16 +17,23 @@ module analysis
 
             observe = state(n_x+1:n_x+n_x*n_y,:)
         end function observe
+        
+        pure function observe_rpe(state)
+            type(rpe_var), dimension(:, :), intent(in) :: state
+            type(rpe_var), dimension(obs_dim, size(state, 2)) :: observe_rpe
+
+            observe_rpe = observe(state%val)
+        end function observe_rpe
 
         function assimilate(ensemble, obs_vec, obs_covar) result(analy)
-            real(dp), dimension(state_dim, n_ens), intent(in) :: ensemble
+            type(rpe_var), dimension(state_dim, n_ens), intent(in) :: ensemble
             real(dp), dimension(obs_dim), intent(in) :: obs_vec
             real(dp), dimension(obs_dim, obs_dim), intent(in) :: obs_covar
-            real(dp), dimension(state_dim, n_ens) :: analy, A
-            real(dp), dimension(state_dim) :: ens_mean
+            type(rpe_var), dimension(state_dim, n_ens) :: analy, A
+            type(rpe_var), dimension(state_dim) :: ens_mean
             real(dp), dimension(obs_dim, n_ens) ::  obs_table
-            real(dp), dimension(state_dim, obs_dim) :: gain
-            real(dp), dimension(state_dim, obs_dim) :: ens_cov_h_t
+            type(rpe_var), dimension(state_dim, obs_dim) :: gain
+            type(rpe_var), dimension(state_dim, obs_dim) :: ens_cov_h_t
             real(dp) :: y_std
             integer :: i, j
 
@@ -28,7 +41,7 @@ module analysis
             y_std = sqrt(obs_covar(1, 1))
 
             ! Mean ensemble vector
-            ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
+            ens_mean = (/ (sum_1d_rpe(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
 
             ! Table of perturbed observations
             do i = 1, n_ens

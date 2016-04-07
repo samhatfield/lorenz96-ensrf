@@ -13,8 +13,6 @@ program main
     !===========================================================================
 
     integer, parameter :: file_1 = 20
-    integer, parameter :: file_2 = 21
-    integer, parameter :: file_3 = 22
 
     ! Loop counters
     integer :: i, j
@@ -22,20 +20,22 @@ program main
     real(dp), dimension(truth_dim) :: initial_truth
     real(dp), dimension(truth_dim, n_steps) :: truth_run
     real(dp), dimension(obs_dim, n_steps) :: obs
-    real(dp), dimension(state_dim, n_ens) :: ensemble
+    type(rpe_var), dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
-    real(dp), dimension(truth_dim) :: climatology_mean
-    real(dp), dimension(truth_dim) :: climatology_std
+    type(rpe_var), dimension(truth_dim) :: climatology_mean
+    type(rpe_var), dimension(truth_dim) :: climatology_std
 
     ! For storing norms of each ensemble member (used for output)
     real(dp), dimension(n_ens) :: x_norms
 
-    ! For storing RMS forecast error, and ensemble mean vector
-    real(dp) :: rms_err
-    real(dp), dimension(state_dim) :: ens_mean
-    
-    ! Stores stochastic components for each ensemble members
-    real(dp), dimension(n_x*n_y, n_ens) :: stochs
+    ! Stores stochastic components for each ensemble member
+    type(rpe_var), dimension(n_x*n_y, n_ens) :: stochs
+
+    ! Literals
+    type(rpe_var) :: zero
+    zero = 0.0_dp
+
+    RPE_DEFAULT_SBITS = sbits
 
     ! Seed
     call time_seed()
@@ -100,7 +100,7 @@ program main
     ! Perturb climatology to generate members
     do i = 1, n_ens
         do j = 1, state_dim
-            ensemble(j, i) = climatology_mean(j) + randn(0.0_dp, climatology_std(j))
+            ensemble(j, i) = climatology_mean(j) + randn(zero, climatology_std(j))
         end do
     end do
 
@@ -108,7 +108,7 @@ program main
     ! Initialise stochastic components vector
     !===========================================================================
 
-    stochs(:, :) = 0.0_dp
+    stochs(:, :) = zero
 
     !===========================================================================
     ! Write metadata to top of output file
@@ -122,16 +122,14 @@ program main
 
     write(*,*) "Running filter..."
 
-    open(unit=file_2, file="results.yml", action="write", position="append")
+    open(unit=file_1, file="results.yml", action="write", position="append")
     do i = 1, n_steps
         ! Write upper, lower and average norm of ensemble members, rms forecast
         ! error and truth and observation vector norm for this timestep
-        x_norms = norm2(ensemble(:n_x,:), 1)
-        ens_mean = (/ (sum(ensemble(j, :))/real(n_ens, dp) , j = 1, state_dim) /)
-        rms_err = norm2(truth_run(:n_x, i) - ens_mean(:n_x))
+        x_norms = norm2(ensemble(:n_x,:)%val, 1)
 
-        write (file_2, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
-            & norm2(truth_run(:n_x,i)), norm2(obs(:,i)), rms_err
+        write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
+            & norm2(truth_run(:n_x,i)), norm2(obs(:,i))
     
         ! Print every 100th timestep
         if (mod(i, 100) == 0) then
@@ -149,5 +147,5 @@ program main
             ensemble = assimilate(ensemble, obs(:, i), obs_covar)
         end if
     end do
-    close(file_2)
+    close(file_1)
 end program main
