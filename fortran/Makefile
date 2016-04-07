@@ -14,7 +14,10 @@ main: main.o params.o lorenz96.o analysis.o metadata.o utils.o\
 	$(FC) -o $@ $^ -lblas -lrpe -Lrpe/lib
 
 main.o: params.o lorenz96.o utils.o analysis.o metadata.o
-lorenz96.o: utils.o
+lorenz96.o: params.o utils.o
+utils.o: params.o
+analysis.o: params.o utils.o
+metadata.o: params.o lorenz96.o
 
 %.o: %.f90
 	$(FC) -c $< -Irpe/modules
