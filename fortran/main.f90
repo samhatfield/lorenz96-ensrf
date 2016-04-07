@@ -124,6 +124,11 @@ program main
 
     open(unit=file_1, file="results.yml", action="write", position="append")
     do i = 1, n_steps
+       ! Print every 100th timestep
+        if (mod(i, 100) == 0) then
+            write(*,*) 'Step ', i 
+        end if
+
         ! Write upper, lower and average norm of ensemble members, rms forecast
         ! error and truth and observation vector norm for this timestep
         x_norms = norm2(ensemble(:n_x,:)%val, 1)
@@ -131,9 +136,9 @@ program main
         write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
             & norm2(truth_run(:n_x,i)), norm2(obs(:,i))
     
-        ! Print every 100th timestep
-        if (mod(i, 100) == 0) then
-            write(*,*) 'Step ', i 
+        ! Analysis step
+        if (mod(i, assim_freq) == 0) then
+            ensemble = assimilate(ensemble, obs(:, i), obs_covar)
         end if
 
         ! Forecast step
@@ -141,11 +146,6 @@ program main
             stochs(:, j) = additive_noise(stochs(:, j))
             ensemble(:, j) = step_param_z(ensemble(:, j), stochs(:, j))
         end do
-
-        ! Analysis step
-        if (mod(i, assim_freq) == 0) then
-            ensemble = assimilate(ensemble, obs(:, i), obs_covar)
-        end if
     end do
     close(file_1)
 end program main
