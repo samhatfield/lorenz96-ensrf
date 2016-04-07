@@ -182,18 +182,13 @@ module utils
         function matmul_rpe(mat1, mat2)
             type(rpe_var), intent(in) :: mat1(:,:), mat2(:,:)
             type(rpe_var) :: matmul_rpe(size(mat1, 1), size(mat2, 2))
-            integer :: m, n, u
             integer :: i, j, k
             
             matmul_rpe(:,:) = 0.0d0
             
-            m = size(mat1, 2)
-            n = size(mat1, 1)
-            u = size(mat2, 2)     
-            
-            do i = 1, u
-                do j = 1, n
-                    do k = 1, m
+            do i = 1, size(mat2, 2)
+                do j = 1, size(mat1, 1)
+                    do k = 1, size(mat1, 2)
                         matmul_rpe(j, i) = matmul_rpe(j, i) + mat1(j, k)*mat2(k, i)
                     end do
                 end do
