@@ -31,6 +31,17 @@ module utils
         module procedure matmul_rpe
     end interface matmul
 
+    public :: sum_1d
+    interface sum_1d
+        module procedure sum_1d
+        module procedure sum_1d_rpe
+    end interface sum_1d
+
+    public :: real
+    interface real
+        module procedure rpe_to_real
+    end interface real
+
     contains
         ! Generates a random number drawn for the specified normal distribution
         function randn(mean, stdev)
@@ -119,7 +130,21 @@ module utils
             
             e = phi * last + sqrt(1-phi**2) * z
         end function additive_noise
-        
+
+        pure function sum_1d(array)
+        	real(dp), intent(in) :: array(:)
+        	real(dp) :: sum_1d
+        	integer :: i, n
+        	
+        	n = size(array)
+        	
+        	sum_1d = 0.0d0
+        	
+        	do i = 1, n
+        		sum_1d = sum_1d + array(i)
+        	end do
+        end function sum_1d
+ 
         !===========================================================================
         ! Reduced precision utils
         !=========================================================================== 
@@ -224,4 +249,10 @@ module utils
         		sum_1d_rpe = sum_1d_rpe + array(i)
         	end do
         end function sum_1d_rpe
+
+        elemental real pure function rpe_to_real(rpe_input)
+            type(rpe_var), intent(in) :: rpe_input
+
+            rpe_to_real = rpe_input%val
+        end function rpe_to_real
 end module utils

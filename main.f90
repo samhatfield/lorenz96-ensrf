@@ -20,19 +20,19 @@ program main
     real(dp), dimension(truth_dim) :: initial_truth
     real(dp), dimension(truth_dim, n_steps) :: truth_run
     real(dp), dimension(obs_dim, n_steps) :: obs
-    type(rpe_var), dimension(state_dim, n_ens) :: ensemble
+    DOUBLE_OR_RPE, dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
-    type(rpe_var), dimension(truth_dim) :: climatology_mean
-    type(rpe_var), dimension(truth_dim) :: climatology_std
+    DOUBLE_OR_RPE, dimension(truth_dim) :: climatology_mean
+    DOUBLE_OR_RPE, dimension(truth_dim) :: climatology_std
 
     ! For storing norms of each ensemble member (used for output)
     real(dp), dimension(n_ens) :: x_norms
 
     ! Stores stochastic components for each ensemble member
-    type(rpe_var), dimension(n_x*n_y, n_ens) :: stochs
+    DOUBLE_OR_RPE, dimension(n_x*n_y, n_ens) :: stochs
 
     ! Literals
-    type(rpe_var) :: zero
+    DOUBLE_OR_RPE :: zero
     zero = 0.0_dp
 
     RPE_DEFAULT_SBITS = sbits
@@ -131,7 +131,7 @@ program main
 
         ! Write upper, lower and average norm of ensemble members, rms forecast
         ! error and truth and observation vector norm for this timestep
-        x_norms = norm2(ensemble(:n_x,:)%val, 1)
+        x_norms = norm2(real(ensemble(:n_x,:)), 1)
 
         write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
             & norm2(truth_run(:n_x,i)), norm2(obs(:,i))

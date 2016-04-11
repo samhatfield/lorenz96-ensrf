@@ -26,14 +26,14 @@ module analysis
         end function observe_rpe
 
         function assimilate(ensemble, obs_vec, obs_covar) result(analy)
-            type(rpe_var), dimension(state_dim, n_ens), intent(in) :: ensemble
+            DOUBLE_OR_RPE, dimension(state_dim, n_ens), intent(in) :: ensemble
             real(dp), dimension(obs_dim), intent(in) :: obs_vec
             real(dp), dimension(obs_dim, obs_dim), intent(in) :: obs_covar
-            type(rpe_var), dimension(state_dim, n_ens) :: analy, A
-            type(rpe_var), dimension(state_dim) :: ens_mean
+            DOUBLE_OR_RPE, dimension(state_dim, n_ens) :: analy, A
+            DOUBLE_OR_RPE, dimension(state_dim) :: ens_mean
             real(dp), dimension(obs_dim, n_ens) ::  obs_table
-            type(rpe_var), dimension(state_dim, obs_dim) :: gain
-            type(rpe_var), dimension(state_dim, obs_dim) :: ens_cov_h_t
+            DOUBLE_OR_RPE, dimension(state_dim, obs_dim) :: gain
+            DOUBLE_OR_RPE, dimension(state_dim, obs_dim) :: ens_cov_h_t
             real(dp) :: y_std
             integer :: i, j
 
@@ -41,7 +41,7 @@ module analysis
             y_std = sqrt(obs_covar(1, 1))
 
             ! Mean ensemble vector
-            ens_mean = (/ (sum_1d_rpe(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
+            ens_mean = (/ (sum_1d(ensemble(i, :))/real(n_ens) , i = 1, state_dim) /)
 
             ! Table of perturbed observations
             do i = 1, n_ens
