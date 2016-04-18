@@ -134,8 +134,8 @@
 *     ..
 *     .. External Functions ..
       TYPE(RPE_VAR)   RLAMCH
-      INTEGER            IDAMAX
-      EXTERNAL           RLAMCH, IDAMAX
+      INTEGER            IDAMAX_RP
+      EXTERNAL           RLAMCH, IDAMAX_RP
 *     ..
 *     .. External Subroutines ..
       EXTERNAL           RGEMM, RSCAL, RLASWP, RTRSM, XERBLA
@@ -187,7 +187,7 @@
 *
 *        Find pivot and test for singularity
 *
-         I = IDAMAX( M, A( 1, 1 )%val, 1 )
+         I = IDAMAX_RP( M, A( 1, 1 )%val, 1 )
          IPIV( 1 ) = I
          IF( A( I, 1 ).NE.ZERO ) THEN
 *

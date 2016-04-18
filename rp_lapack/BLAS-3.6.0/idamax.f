@@ -49,7 +49,7 @@
 *> \endverbatim
 *>
 *  =====================================================================
-      INTEGER FUNCTION IDAMAX(N,DX,INCX)
+      INTEGER FUNCTION IDAMAX_RP(N,DX,INCX)
 
       USE RP_EMULATOR
 *
