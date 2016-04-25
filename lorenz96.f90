@@ -137,7 +137,7 @@ module lorenz96
         !===========================================================================     
 
         ! Step forward once
-        function step_param_z(prev_state, stoch) result(step)
+        pure function step_param_z(prev_state, stoch) result(step)
             real(dp), dimension(n_x+n_x*n_y), intent(in) :: prev_state
             real(dp), dimension(n_x*n_y), intent(in) :: stoch
             real(dp), dimension(n_x+n_x*n_y) :: step, k1, k2, k3, k4  

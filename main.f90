@@ -1,7 +1,7 @@
 program main
     use params
     use lorenz96, only: step, step_param_z
-    use utils, only: randn, time_seed, additive_noise
+    use utils, only: randn, time_seed, ar_1
     use analysis
     use metadata
     use rp_emulator
@@ -138,12 +138,12 @@ program main
     
         ! Analysis step
         if (mod(i, assim_freq) == 0) then
-            ensemble = assimilate(ensemble, obs(:, i), obs_covar)
+            ensemble = enkf_assimilate(ensemble, obs(:, i), obs_covar)
         end if
 
         ! Forecast step
         do j = 1, n_ens
-            stochs(:, j) = additive_noise(stochs(:, j))
+            stochs(:, j) = ar_1(stochs(:, j))
             ensemble(:, j) = step_param_z(ensemble(:, j), stochs(:, j))
         end do
     end do

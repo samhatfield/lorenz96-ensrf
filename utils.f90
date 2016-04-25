@@ -20,11 +20,11 @@ module utils
         module procedure randn_rpe
     end interface randn
     
-    public :: additive_noise
-    interface additive_noise
-        module procedure additive_noise
-        module procedure additive_noise_rpe
-    end interface additive_noise
+    public :: ar_1
+    interface ar_1
+        module procedure ar_1
+        module procedure ar_1_rpe
+    end interface ar_1
 
     public :: matmul
     interface matmul
@@ -116,7 +116,7 @@ module utils
         end function
         
         ! Zero mean AR(1) process
-        function additive_noise(last) result(e)
+        function ar_1(last) result(e)
             real(dp), dimension(n_x*n_y), intent(in) :: last
             real(dp), dimension(n_x*n_y) :: e
             real(dp) :: phi = 0.997_dp
@@ -129,7 +129,7 @@ module utils
             end do
             
             e = phi * last + sqrt(1-phi**2) * z
-        end function additive_noise
+        end function ar_1
 
         pure function sum_1d(array)
         	real(dp), intent(in) :: array(:)
@@ -188,7 +188,7 @@ module utils
         end function inv_rpe
         
         ! Zero mean AR(1) process
-        function additive_noise_rpe(last) result(e)
+        function ar_1_rpe(last) result(e)
             type(rpe_var), dimension(n_x*n_y), intent(in) :: last
             type(rpe_var), dimension(n_x*n_y) :: e
             real(dp) :: phi = 0.997_dp
@@ -201,7 +201,7 @@ module utils
             end do
             
             e = phi * last + sqrt(1-phi**2) * z
-        end function additive_noise_rpe
+        end function ar_1_rpe
         
         ! Reduced precision matrix multiplication
         function matmul_rpe(mat1, mat2)

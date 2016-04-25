@@ -25,7 +25,7 @@ module analysis
             observe_rpe = observe(state%val)
         end function observe_rpe
 
-        function assimilate(ensemble, obs_vec, obs_covar) result(analy)
+        function enkf_assimilate(ensemble, obs_vec, obs_covar) result(analy)
             DOUBLE_OR_RPE, dimension(state_dim, n_ens), intent(in) :: ensemble
             real(dp), dimension(obs_dim), intent(in) :: obs_vec
             real(dp), dimension(obs_dim, obs_dim), intent(in) :: obs_covar
@@ -62,5 +62,5 @@ module analysis
             gain = matmul(ens_cov_h_t, inv(observe(ens_cov_h_t) + obs_covar))
 
             analy = ensemble + matmul(gain, obs_table - observe(ensemble))
-        end function assimilate
+        end function enkf_assimilate
 end module analysis
