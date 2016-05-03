@@ -129,17 +129,17 @@ program main
             write(*,*) 'Step ', i 
         end if
 
-        ! Write upper, lower and average norm of ensemble members, rms forecast
-        ! error and truth and observation vector norm for this timestep
-        x_norms = norm2(real(ensemble(:n_x,:)), 1)
-
-        write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
-            & norm2(truth_run(:n_x,i)), norm2(obs(:,i))
-    
         ! Analysis step
         if (mod(i, assim_freq) == 0) then
             ensemble = enkf_assimilate(ensemble, obs(:, i), obs_covar)
         end if
+
+        ! Write norm and std of X norms, rms forecast error and truth and
+        ! observation vector norm for this timestep
+        x_norms = norm2(real(ensemble(:n_x,:)), 1)
+
+        write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
+            & norm2(truth_run(:n_x,i))
 
         ! Forecast step
         do j = 1, n_ens
