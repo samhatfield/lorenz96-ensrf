@@ -5,6 +5,7 @@ program main
     use analysis
     use metadata
     use rp_emulator
+    use observation, only: observe
 
     implicit none
 
