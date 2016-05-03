@@ -29,6 +29,7 @@ module utils
     public :: matmul
     interface matmul
         module procedure matmul_rpe
+        module procedure matmulvec_rpe
     end interface matmul
 
     public :: sum_1d
@@ -219,6 +220,20 @@ module utils
                 end do
             end do
         end function matmul_rpe
+
+        ! Reduced precision matrix-vector multiplication
+        function matmulvec_rpe(mat, vec)
+            type(rpe_var), intent(in) :: mat(:,:), vec(:)
+            type(rpe_var) :: matmulvec_rpe(size(mat, 1))
+            integer :: i, j, k
+            
+            do j = 1, size(mat, 1)
+                matmulvec_rpe(j) = 0.0_dp
+                do k = 1, size(vec)
+                    matmulvec_rpe(j) = matmulvec_rpe(j) + mat(j, k)*vec(k)
+                end do
+            end do
+        end function matmulvec_rpe
         
         ! Reduced precision sum of 2D array (returns 1D array, with sum of elements
         ! along 1st dimension)
