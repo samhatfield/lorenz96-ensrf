@@ -40,7 +40,7 @@ module metadata
             write (file_1, 3) 'sbits: ', sbits
             write (file_1, '(a)') '# Columns (all quantities calculated from &
             & X variables only:'
-            write (file_1, '(a)') '# Avg norm, Std norm, Truth, Obs, RMS err'
+            write (file_1, '(a)') '# Avg norm, Std norm, Truth'
             write (file_1, '(a5)') '---'
 
             close(file_1)
