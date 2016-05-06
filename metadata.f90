@@ -36,7 +36,6 @@ module metadata
             write (file_1, 4) 'assim_freq: ', assim_freq
             write (file_1, 9), 'y_var: ', y_var
             write (file_1, 8) 'obs_dim: ', obs_dim
-            write (file_1, 6) 'rho: ', rho
             write (file_1, 3) 'sbits: ', sbits
             write (file_1, '(a)') '# Columns (all quantities calculated from &
             & X variables only:'
