@@ -201,19 +201,25 @@ module lorenz96
             type(rpe_var), dimension(n_x+n_x*n_y), intent(in) :: prev_state
             type(rpe_var), dimension(n_x*n_y), intent(in) :: stoch
             type(rpe_var), dimension(n_x+n_x*n_y) :: step, k1, k2, k3, k4  
+            type(rpe_var) :: half, six, two, dt_rpe
+
+            half = 0.5_dp
+            six = 6.0_dp
+            two = 2.0_dp
+            dt_rpe = dt
             
             ! 4th order Runge-Kutta
             k1 = ode_param_z(prev_state, stoch)
-            k2 = ode_param_z(prev_state+0.5_dp*dt*k1, stoch)
-            k3 = ode_param_z(prev_state+0.5_dp*dt*k2, stoch)
-            k4 = ode_param_z(prev_state+dt*k3, stoch)
+            k2 = ode_param_z(prev_state+half*dt_rpe*k1, stoch)
+            k3 = ode_param_z(prev_state+half*dt_rpe*k2, stoch)
+            k4 = ode_param_z(prev_state+dt_rpe*k3, stoch)
 
-            step = prev_state + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
+            step = prev_state + (dt_rpe/six)*(k1 + two*k2 + two*k3 + k4)
         end function step_param_z_rpe
 
         ! The three-level system of ODEs for the Lorenz '96 system, with
         ! parametrized Z
-        pure function ode_param_z_rpe(state, stoch) result(ode)
+        function ode_param_z_rpe(state, stoch) result(ode)
             type(rpe_var), dimension(state_dim), intent(in) :: state
             type(rpe_var), dimension(n_x*n_y), intent(in) :: stoch
             type(rpe_var), dimension(n_x) :: x
@@ -230,39 +236,56 @@ module lorenz96
         end function ode_param_z_rpe
         
         ! X ODE
-        pure function dXdT_rpe(x, y) result(dXdT)
+        function dXdT_rpe(x, y) result(dXdT)
             type(rpe_var), dimension(n_x), intent(in) :: x
             type(rpe_var), dimension(n_x*n_y), intent(in) :: y
             type(rpe_var), dimension(n_x) :: dXdT
             type(rpe_var), dimension(n_x) :: sum_y
+            type(rpe_var) :: h_rpe, c_rpe, b_rpe
+
+            h_rpe = h
+            c_rpe = c
+            b_rpe = b
 
             ! Sum all y's for each x, making an n_x length vector of y sums
             sum_y = sum_2d_rpe(reshape(y, (/n_y,n_x/)))
 
-            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - g_X*x + f
-            dXdT = dXdT - (h*c/b)*sum_y
+            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - rpe_literal(g_X)*x
+            dXdT = dXdT + rpe_literal(f) - (h_rpe*c_rpe/b_rpe)*sum_y
         end function dXdT_rpe
         
         ! Y ODE, parametrized Z
-        pure function dYdT_param_z_rpe(x, y, stoch) result(dYdT)
+        function dYdT_param_z_rpe(x, y, stoch) result(dYdT)
             type(rpe_var), dimension(n_x), intent(in) :: x
             type(rpe_var), dimension(n_x*n_y), intent(in) :: y
             type(rpe_var), dimension(n_x*n_y), intent(in) :: stoch
             type(rpe_var), dimension(n_x*n_y) :: dYdT
             type(rpe_var), dimension(n_x*n_y) :: x_rpt
             type(rpe_var), dimension(n_x*n_y) :: tend_z
+            type(rpe_var), dimension(5) :: coeffs
+            type(rpe_var) :: h_rpe, c_rpe, b_rpe
             integer :: k
+
+            coeffs(1) = 0.001892_dp
+            coeffs(2) = -0.066811_dp
+            coeffs(3) = 0.131826_dp
+            coeffs(4) = 0.242742_dp
+            coeffs(5) = 0.039970_dp
+
+            h_rpe = h
+            c_rpe = c
+            b_rpe = b
 
             ! Repeat elements of x n_y times
             x_rpt = (/ (x(1+(k-1)/n_y), k = 1, n_x*n_y) /)
 
             ! Compute the Z tendency from the chosen parametrization scheme
             ! Deterministic, 4th order polynomial
-            tend_z = (0.001892_dp*y**4) + (-0.066811_dp*y**3) + &
-                & (0.131826_dp*y**2) + (0.242742_dp*y) + 0.039970_dp
+            tend_z = (coeffs(1)*y**4) + (coeffs(2)*y**3) + &
+                & (coeffs(3)*y**2) + (coeffs(4)*y) + coeffs(5)
                 
-            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y*y
-            dYdT = dYdT + (h*c/b)*x_rpt        
+            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - rpe_literal(g_Y)*y
+            dYdT = dYdT + (h_rpe*c_rpe/b_rpe)*x_rpt        
             dYdT = dYdT - (tend_z + stoch)
         end function dYdT_param_z_rpe
 end module lorenz96

@@ -192,13 +192,16 @@ module utils
         function ar_1_rpe(last) result(e)
             type(rpe_var), dimension(n_x*n_y), intent(in) :: last
             type(rpe_var), dimension(n_x*n_y) :: e
-            real(dp) :: phi = 0.997_dp
-            real(dp) :: sigma_e = 0.126_dp
-            real(dp), dimension(n_x*n_y) :: z
+            type(rpe_var) :: phi
+            type(rpe_var) :: sigma_e
+            type(rpe_var), dimension(n_x*n_y) :: z
             integer :: i
+
+            phi = 0.997_dp
+            sigma_e = 0.126_dp
             
             do i = 1, n_x*n_y
-                z(i) = randn(0.0_dp, sigma_e)
+                z(i) = randn(rpe_literal(0.0_dp), sigma_e)
             end do
             
             e = phi * last + sqrt(1-phi**2) * z
