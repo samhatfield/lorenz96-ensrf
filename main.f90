@@ -25,6 +25,7 @@ program main
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
     DOUBLE_OR_RPE, dimension(truth_dim) :: climatology_mean
     DOUBLE_OR_RPE, dimension(truth_dim) :: climatology_std
+    real(dp) :: rand
 
     ! For storing norms of each ensemble member (used for output)
     real(dp), dimension(n_ens) :: x_norms
@@ -94,15 +95,12 @@ program main
 
     write(*,*) "Generating ensemble..."
 
-    ! Get climatology from time average of truth
-    climatology_mean = (/ (sum(truth_run(j, :))/real(n_steps, dp), j = 1, truth_dim) /)
-    climatology_std = (/ (std(truth_run(j, :)), j = 1, truth_dim) /)
-
-    ! Perturb climatology to generate members
+    ! Generate an ensemble by taking random samples from truth run
+    ! (Equivalent to sampling the climatology)
     do i = 1, n_ens
-        do j = 1, state_dim
-            ensemble(j, i) = climatology_mean(j) + randn(zero, climatology_std(j))
-        end do
+        call random_number(rand)
+        j = floor(rand * n_steps)
+        ensemble(:, i) = truth_run(:n_x+n_x*n_y, j)
     end do
 
     !===========================================================================
@@ -132,7 +130,7 @@ program main
 
         ! Analysis step
         if (mod(i, assim_freq) == 0) then
-            ensemble = enkf_assimilate(ensemble, obs(:, i), obs_covar)
+            ensemble = ensrf_assimilate(ensemble, obs(:, i), obs_covar)
         end if
 
         ! Write norm and std of X norms, rms forecast error and truth and
