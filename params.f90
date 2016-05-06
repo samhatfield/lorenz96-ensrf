@@ -20,16 +20,13 @@ module params
     integer, parameter :: state_dim = n_x + n_x*n_y
     
     ! Number of ensemble members
-    integer, parameter :: n_ens = 500
+    integer, parameter :: n_ens = 50
 
     ! Frequency of assimilations, i.e. 1 = every timestep
     integer, parameter :: assim_freq = 10
 
     ! Observation error variance
     real(dp), parameter :: y_var = 0.1_dp
-
-    ! Inflation factor for tuning assimilation (see analysis.f90)
-    real(dp), parameter :: rho = 1.0_dp
 
     ! Observe only Y variables
     integer, parameter :: obs_dim = n_x*n_y
