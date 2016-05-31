@@ -99,7 +99,7 @@ program main
     ! (Equivalent to sampling the climatology)
     do i = 1, n_ens
         call random_number(rand)
-        j = floor(rand * n_steps)
+        j = ceiling(rand * n_steps)
         ensemble(:, i) = truth_run(:n_x+n_x*n_y, j)
     end do
 
