@@ -2,25 +2,21 @@
 FC = gfortran
 
 # Chooses full precision or reduced precision based on chosen target
-full : DOUBLE_OR_RPE = real(dp)
-rpe : DOUBLE_OR_RPE = type(rpe_var)
+double : PRECISION = real(dp)
+single : PRECISION = real(sp)
+rpe : PRECISION = type(rpe_var)
 
-# LAPACK files required for full precision matrix inverse
-LAPACK = $(patsubst %.f,%.o,$(wildcard lapack/dgetrf/*.f lapack/dgetri/*.f))
+# Double precision - default
+double: main
 
-# Reduced precision LAPACK and BLAS files required for reduced precision matrix inverse
-RP_LAPACK = $(patsubst %.f,%.o,$(wildcard rp_lapack/rgetrf/*.f rp_lapack/rgetri/*.f))
-BLAS = $(patsubst %.f,%.o,$(wildcard rp_lapack/BLAS-3.6.0/*.f))
-
-# Full precision - default
-full: main
+# Single precision
+single: main
 
 # Reduced precision
 rpe: main
 
 # Main target: main executable
-main: main.o params.o lorenz96.o analysis.o metadata.o utils.o observation.o\
-	$(LAPACK) $(RP_LAPACK) $(BLAS)
+main: main.o params.o lorenz96.o analysis.o metadata.o utils.o observation.o
 	$(FC) -o $@ $^ -lblas -lrpe -Lrpe/lib
 
 # Dependencies
@@ -33,14 +29,9 @@ observation.o: params.o
 
 # Build rules
 %.o: %.f90
-	$(FC) -c -cpp -DDOUBLE_OR_RPE='$(DOUBLE_OR_RPE)' $< -Irpe/modules
-
-rp_lapack/rgetr%.o: rp_lapack/rgetr%.f
-	$(FC) -c -o $@ $< -Irpe/modules
-
-rp_lapack/BLAS-3.6.0/%.o: rp_lapack/BLAS-3.6.0/%.f
-	$(FC) -c -o $@ $< -Irpe/modules
+	python parse.py $<
+	$(FC) -c -cpp -DPRECISION='$(PRECISION)' out.$< -o $(basename $<).o -Irpe/modules
 
 .PHONY: clean
 clean:
-	rm -f *.o *.mod $(LAPACK) $(RP_LAPACK) $(BLAS)
+	rm -f *.o *.mod out.*.f90

@@ -2,6 +2,7 @@ module params
     implicit none
     
     integer, parameter :: dp = kind(0.d0)
+    integer, parameter :: sp = kind(0.0)
 
     !Start and end times, and number of time steps
     real(dp), parameter :: dt = 0.005_dp
@@ -23,7 +24,7 @@ module params
     integer, parameter :: n_ens = 50
 
     ! Frequency of assimilations, i.e. 1 = every timestep
-    integer, parameter :: assim_freq = 10
+    integer, parameter :: assim_freq = 1
 
     ! Observation error variance
     real(dp), parameter :: y_var = 0.1_dp
@@ -32,5 +33,5 @@ module params
     integer, parameter :: obs_dim = n_x*n_y
 
     ! Default significand
-    integer, parameter :: sbits = 23
+    integer, parameter :: sbits = 10
 end module params

@@ -10,65 +10,40 @@ module observation
 
     public :: observe
     interface observe
-        module procedure observe
-        module procedure observe_rpe
-        module procedure observe_row
-        module procedure observe_row_rpe
-    end interface observe
-
-    interface observe_1d_row
-        module procedure observe_1d_row
-        module procedure observe_1d_row_rpe
-    end interface observe_1d_row
+        {% for type in types %}
+        module procedure observe_{{ type.name }}
+        module procedure observe_row_{{ type.name }}
+        module procedure observe_1d_row_{{ type.name }}
+        {% endfor %}
+    end interface
 
     !===========================================================================
     ! Function definitions
     !=========================================================================== 
 
     contains
-        pure function observe(state)
-            real(dp), dimension(:, :), intent(in) :: state
-            real(dp), dimension(obs_dim, size(state, 2)) :: observe
-
+        {% for type in types %}
+        pure function observe_{{ type.name }}(state) result(observe)
+            {{ type.code }}, intent(in) :: state(:,:)
+            {{ type.code }} :: observe(obs_dim, size(state,2))
+            
             observe = state(n_x+1:n_x+n_x*n_y,:)
-        end function observe
+        end function
 
-        pure function observe_rpe(state)
-            type(rpe_var), dimension(:, :), intent(in) :: state
-            type(rpe_var), dimension(obs_dim, size(state, 2)) :: observe_rpe
-
-            observe_rpe = observe(state%val)
-        end function observe_rpe
-
-        pure function observe_row(state, row)
-            real(dp), dimension(:, :), intent(in) :: state
+        pure function observe_row_{{ type.name }}(state, row) result(observe_row)
+            {{ type.code }}, intent(in) :: state(:,:)
             integer, intent(in) :: row
-            real(dp), dimension(size(state, 2)) :: observe_row
+            {{ type.code }} :: observe_row(size(state,2))
 
             observe_row = state(n_x+row,:)
-        end function observe_row
+        end function
 
-        pure function observe_row_rpe(state, row)
-            type(rpe_var), dimension(:, :), intent(in) :: state
+        pure function observe_1d_row_{{ type.name }}(state, row) result(observe_1d_row)
+            {{ type.code }}, intent(in) :: state(state_dim)
             integer, intent(in) :: row
-            type(rpe_var), dimension(size(state, 2)) :: observe_row_rpe
-
-            observe_row_rpe = observe_row(state%val, row)
-        end function observe_row_rpe
-
-        pure function observe_1d_row(state, row)
-            real(dp), dimension(state_dim), intent(in) :: state
-            integer, intent(in) :: row
-            real(dp) :: observe_1d_row
+            {{ type.code }} :: observe_1d_row
 
             observe_1d_row = state(n_x+row)
-        end function observe_1d_row
-
-        pure function observe_1d_row_rpe(state, row)
-            type(rpe_var), dimension(state_dim), intent(in) :: state
-            integer, intent(in) :: row
-            type(rpe_var) :: observe_1d_row_rpe
-
-            observe_1d_row_rpe = observe_1d_row(state%val, row)
-        end function observe_1d_row_rpe
-end module observation
+        end function
+        {% endfor %}
+end module

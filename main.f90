@@ -21,20 +21,20 @@ program main
     real(dp), dimension(truth_dim) :: initial_truth
     real(dp), dimension(truth_dim, n_steps) :: truth_run
     real(dp), dimension(obs_dim, n_steps) :: obs
-    DOUBLE_OR_RPE, dimension(state_dim, n_ens) :: ensemble
+    PRECISION, dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
-    DOUBLE_OR_RPE, dimension(truth_dim) :: climatology_mean
-    DOUBLE_OR_RPE, dimension(truth_dim) :: climatology_std
+    PRECISION, dimension(truth_dim) :: climatology_mean
+    PRECISION, dimension(truth_dim) :: climatology_std
     real(dp) :: rand
 
     ! For storing norms of each ensemble member (used for output)
     real(dp), dimension(n_ens) :: x_norms
 
     ! Stores stochastic components for each ensemble member
-    DOUBLE_OR_RPE, dimension(n_x*n_y, n_ens) :: stochs
+    PRECISION, dimension(n_x*n_y, n_ens) :: stochs
 
     ! Literals
-    DOUBLE_OR_RPE :: zero
+    PRECISION :: zero
     zero = 0.0_dp
 
     RPE_DEFAULT_SBITS = sbits

@@ -1,6 +1,6 @@
 module lorenz96
     use params
-    use utils, only: randn, sum_2d_rpe
+    use utils
     use rp_emulator
 
     implicit none
@@ -22,27 +22,31 @@ module lorenz96
 
     public :: step_param_z
     interface step_param_z
-        module procedure step_param_z
-        module procedure step_param_z_rpe
-    end interface step_param_z
+        {% for type in types %}
+        module procedure step_param_z_{{ type.name }}
+        {% endfor %}
+    end interface
 
     public :: ode_param_z
     interface ode_param_z
-        module procedure ode_param_z
-        module procedure ode_param_z_rpe
-    end interface ode_param_z
+        {% for type in types %}
+        module procedure ode_param_z_{{ type.name }}
+        {% endfor %}
+    end interface
 
     public :: dXdT
     interface dXdT
-        module procedure dXdT
-        module procedure dXdT_rpe
-    end interface dXdT
+        {% for type in types %}
+        module procedure dXdT_{{ type.name }}
+        {% endfor %}
+    end interface
 
     public :: dYdT_param_z
     interface dYdT_param_z
-        module procedure dYdT_param_z
-        module procedure dYdT_param_z_rpe
-    end interface dYdT_param_z
+        {% for type in types %}
+        module procedure dYdT_param_z_{{ type.name }}
+        {% endfor %}
+    end interface
 
     contains
         !===========================================================================
@@ -50,7 +54,7 @@ module lorenz96
         !===========================================================================
 
         ! Step forward once
-        function step(prev_state)
+        pure function step(prev_state)
             real(dp), dimension(truth_dim), intent(in) :: prev_state
             real(dp), dimension(truth_dim) :: step, k1, k2, k3, k4
 
@@ -61,7 +65,7 @@ module lorenz96
             k4 = ode(prev_state+dt*k3) 
 
             step = prev_state + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
-        end function step
+        end function
         
         ! The full three-level system of ODEs for the Lorenz '96 system
         pure function ode(state)
@@ -80,21 +84,30 @@ module lorenz96
             ode(:n_x) = dXdT(x, y)
             ode(n_x+1:n_x+n_x*n_y) = dYdT(x, y, z)
             ode(n_x+n_x*n_y+1:) = dZdT(y, z)
-        end function ode
+        end function
 
         ! X ODE
-        pure function dXdT(x, y)
-            real(dp), dimension(n_x), intent(in) :: x
-            real(dp), dimension(n_x*n_y), intent(in) :: y
-            real(dp), dimension(n_x) :: dXdT
-            real(dp), dimension(n_x) :: sum_y
+        {% for type in types %}
+        pure function dXdT_{{ type.name }}(x, y) result(dXdT)
+            {{ type.code }}, dimension(n_x), intent(in) :: x
+            {{ type.code }}, dimension(n_x*n_y), intent(in) :: y
+            {{ type.code }}, dimension(n_x) :: dXdT
+            {{ type.code }}, dimension(n_x) :: sum_y
+            {{ type.code }} :: h_, c_, b_, g_X_, f_
+
+            h_ = h
+            c_ = c
+            b_ = b
+            g_X_ = g_X
+            f_ = f
 
             ! Sum all y's for each x, making an n_x length vector of y sums
-            sum_y = sum(reshape(y, (/n_y,n_x/)), dim=1)
+            sum_y = sum_2d(reshape(y, (/n_y,n_x/)))
 
-            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - g_X*x + f
-            dXdT = dXdT - (h*c/b)*sum_y
-        end function dXdT
+            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - g_X_*x
+            dXdT = dXdT + f_ - (h_*c_/b_)*sum_y
+        end function
+        {% endfor %}
 
         ! Y ODE
         pure function dYdT(x, y, z)
@@ -115,7 +128,7 @@ module lorenz96
             dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y*y
             dYdT = dYdT + (h*c/b)*x_rpt
             dYdT = dYdT - (h*e/d)*sum_z
-        end function dYdT
+        end function
 
         ! Z ODE
         pure function dZdT(y, z)
@@ -130,78 +143,19 @@ module lorenz96
 
             dZdT = e*b*cshift(z,-1)*(cshift(z,1)-cshift(z,-2)) - g_Z*Z
             dZdT = dZdT + (h*e/d)*y_rpt
-        end function dZdT
+        end function
         
         !===========================================================================
         ! Three-level model with parametrised Z dynamics
         !===========================================================================     
 
         ! Step forward once
-        pure function step_param_z(prev_state, stoch) result(step)
-            real(dp), dimension(n_x+n_x*n_y), intent(in) :: prev_state
-            real(dp), dimension(n_x*n_y), intent(in) :: stoch
-            real(dp), dimension(n_x+n_x*n_y) :: step, k1, k2, k3, k4  
-            
-            ! 4th order Runge-Kutta
-            k1 = ode_param_z(prev_state, stoch)
-            k2 = ode_param_z(prev_state+0.5_dp*dt*k1, stoch)
-            k3 = ode_param_z(prev_state+0.5_dp*dt*k2, stoch)
-            k4 = ode_param_z(prev_state+dt*k3, stoch)
-
-            step = prev_state + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
-        end function step_param_z
-
-        ! The three-level system of ODEs for the Lorenz '96 system, with
-        ! parametrized Z
-        pure function ode_param_z(state, stoch) result(ode)
-            real(dp), dimension(state_dim), intent(in) :: state
-            real(dp), dimension(n_x*n_y), intent(in) :: stoch
-            real(dp), dimension(n_x) :: x
-            real(dp), dimension(n_x*n_y) :: y
-            real(dp), dimension(state_dim) :: ode
-
-            ! Break up state vector into components
-            x = state(:n_x)
-            y = state(n_x+1:)
-
-            ! Find derivative of each component separately
-            ode(:n_x) = dXdT(x, y)
-            ode(n_x+1:) = dYdT_param_z(x, y, stoch)
-        end function ode_param_z
-
-        ! Y ODE, parametrized Z
-        pure function dYdT_param_z(x, y, stoch) result(dYdT)
-            real(dp), dimension(n_x), intent(in) :: x
-            real(dp), dimension(n_x*n_y), intent(in) :: y
-            real(dp), dimension(n_x*n_y), intent(in) :: stoch
-            real(dp), dimension(n_x*n_y) :: dYdT
-            real(dp), dimension(n_x*n_y) :: x_rpt
-            real(dp), dimension(n_x*n_y) :: tend_z
-            integer :: k
-
-            ! Repeat elements of x n_y times
-            x_rpt = (/ (x(1+(k-1)/n_y), k = 1, n_x*n_y) /)
-
-            ! Compute the Z tendency from the chosen parametrization scheme
-            ! Deterministic, 4th order polynomial
-            tend_z = (0.001892_dp*y**4) + (-0.066811_dp*y**3) + &
-                & (0.131826_dp*y**2) + (0.242742_dp*y) + 0.039970_dp
-                
-            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y*y
-            dYdT = dYdT + (h*c/b)*x_rpt        
-            dYdT = dYdT - (tend_z + stoch)
-        end function dYdT_param_z
-        
-        !===========================================================================
-        ! Three-level model with parametrised Z dynamics and reduced precision
-        !===========================================================================     
-
-        ! Step forward once
-        function step_param_z_rpe(prev_state, stoch) result(step)
-            type(rpe_var), dimension(n_x+n_x*n_y), intent(in) :: prev_state
-            type(rpe_var), dimension(n_x*n_y), intent(in) :: stoch
-            type(rpe_var), dimension(n_x+n_x*n_y) :: step, k1, k2, k3, k4  
-            type(rpe_var) :: half, six, two, dt_rpe
+        {% for type in types %}
+        function step_param_z_{{ type.name }}(prev_state, stoch) result(step)
+            {{ type.code }}, dimension(n_x+n_x*n_y), intent(in) :: prev_state
+            {{ type.code }}, dimension(n_x*n_y), intent(in) :: stoch
+            {{ type.code }}, dimension(n_x+n_x*n_y) :: step, k1, k2, k3, k4  
+            {{ type.code }} :: half, six, two, dt_rpe
 
             half = 0.5_dp
             six = 6.0_dp
@@ -215,16 +169,16 @@ module lorenz96
             k4 = ode_param_z(prev_state+dt_rpe*k3, stoch)
 
             step = prev_state + (dt_rpe/six)*(k1 + two*k2 + two*k3 + k4)
-        end function step_param_z_rpe
+        end function
 
         ! The three-level system of ODEs for the Lorenz '96 system, with
         ! parametrized Z
-        function ode_param_z_rpe(state, stoch) result(ode)
-            type(rpe_var), dimension(state_dim), intent(in) :: state
-            type(rpe_var), dimension(n_x*n_y), intent(in) :: stoch
-            type(rpe_var), dimension(n_x) :: x
-            type(rpe_var), dimension(n_x*n_y) :: y
-            type(rpe_var), dimension(state_dim) :: ode
+        function ode_param_z_{{ type.name }}(state, stoch) result(ode)
+            {{ type.code }}, dimension(state_dim), intent(in) :: state
+            {{ type.code }}, dimension(n_x*n_y), intent(in) :: stoch
+            {{ type.code }}, dimension(n_x) :: x
+            {{ type.code }}, dimension(n_x*n_y) :: y
+            {{ type.code }}, dimension(state_dim) :: ode
 
             ! Break up state vector into components
             x = state(:n_x)
@@ -233,37 +187,18 @@ module lorenz96
             ! Find derivative of each component separately
             ode(:n_x) = dXdT(x, y)
             ode(n_x+1:) = dYdT_param_z(x, y, stoch)
-        end function ode_param_z_rpe
-        
-        ! X ODE
-        function dXdT_rpe(x, y) result(dXdT)
-            type(rpe_var), dimension(n_x), intent(in) :: x
-            type(rpe_var), dimension(n_x*n_y), intent(in) :: y
-            type(rpe_var), dimension(n_x) :: dXdT
-            type(rpe_var), dimension(n_x) :: sum_y
-            type(rpe_var) :: h_rpe, c_rpe, b_rpe
-
-            h_rpe = h
-            c_rpe = c
-            b_rpe = b
-
-            ! Sum all y's for each x, making an n_x length vector of y sums
-            sum_y = sum_2d_rpe(reshape(y, (/n_y,n_x/)))
-
-            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - rpe_literal(g_X)*x
-            dXdT = dXdT + rpe_literal(f) - (h_rpe*c_rpe/b_rpe)*sum_y
-        end function dXdT_rpe
+        end function
         
         ! Y ODE, parametrized Z
-        function dYdT_param_z_rpe(x, y, stoch) result(dYdT)
-            type(rpe_var), dimension(n_x), intent(in) :: x
-            type(rpe_var), dimension(n_x*n_y), intent(in) :: y
-            type(rpe_var), dimension(n_x*n_y), intent(in) :: stoch
-            type(rpe_var), dimension(n_x*n_y) :: dYdT
-            type(rpe_var), dimension(n_x*n_y) :: x_rpt
-            type(rpe_var), dimension(n_x*n_y) :: tend_z
-            type(rpe_var), dimension(5) :: coeffs
-            type(rpe_var) :: h_rpe, c_rpe, b_rpe
+        function dYdT_param_z_{{ type.name }}(x, y, stoch) result(dYdT)
+            {{ type.code }}, dimension(n_x), intent(in) :: x
+            {{ type.code }}, dimension(n_x*n_y), intent(in) :: y
+            {{ type.code }}, dimension(n_x*n_y), intent(in) :: stoch
+            {{ type.code }}, dimension(n_x*n_y) :: dYdT
+            {{ type.code }}, dimension(n_x*n_y) :: x_rpt
+            {{ type.code }}, dimension(n_x*n_y) :: tend_z
+            {{ type.code }}, dimension(5) :: coeffs
+            {{ type.code }} :: h_, c_, b_, g_Y_
             integer :: k
 
             coeffs(1) = 0.001892_dp
@@ -272,9 +207,10 @@ module lorenz96
             coeffs(4) = 0.242742_dp
             coeffs(5) = 0.039970_dp
 
-            h_rpe = h
-            c_rpe = c
-            b_rpe = b
+            h_ = h
+            c_ = c
+            b_ = b
+            g_Y_ = g_Y
 
             ! Repeat elements of x n_y times
             x_rpt = (/ (x(1+(k-1)/n_y), k = 1, n_x*n_y) /)
@@ -284,8 +220,9 @@ module lorenz96
             tend_z = (coeffs(1)*y**4) + (coeffs(2)*y**3) + &
                 & (coeffs(3)*y**2) + (coeffs(4)*y) + coeffs(5)
                 
-            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - rpe_literal(g_Y)*y
-            dYdT = dYdT + (h_rpe*c_rpe/b_rpe)*x_rpt        
+            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y_*y
+            dYdT = dYdT + (h_*c_/b_)*x_rpt        
             dYdT = dYdT - (tend_z + stoch)
-        end function dYdT_param_z_rpe
+        end function
+        {% endfor %}
 end module lorenz96
