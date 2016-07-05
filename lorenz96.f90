@@ -12,9 +12,7 @@ module lorenz96
     real(dp), parameter :: b = 10._dp
     real(dp), parameter :: e = 10._dp
     real(dp), parameter :: d = 10._dp
-    real(dp), parameter :: g_X = 1._dp
-    real(dp), parameter :: g_Y = c
-    real(dp), parameter :: g_Z = e
+    real(dp), parameter :: g_Z = 1.0_dp
 
     !===========================================================================
     ! Interfaces for overloaded definitions
@@ -93,19 +91,17 @@ module lorenz96
             {{ type.code }}, dimension(n_x*n_y), intent(in) :: y
             {{ type.code }}, dimension(n_x) :: dXdT
             {{ type.code }}, dimension(n_x) :: sum_y
-            {{ type.code }} :: h_, c_, b_, g_X_, f_
+            {{ type.code }} :: h_, c_, b_, f_
 
             h_ = h
             c_ = c
             b_ = b
-            g_X_ = g_X
             f_ = f
 
             ! Sum all y's for each x, making an n_x length vector of y sums
             sum_y = sum_2d(reshape(y, (/n_y,n_x/)))
 
-            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - g_X_*x
-            dXdT = dXdT + f_ - (h_*c_/b_)*sum_y
+            dXdT = cshift(x,-1)*(cshift(x,1)-cshift(x,-2)) - x + f_ - (h_*c_/b_)*sum_y
         end function
         {% endfor %}
 
@@ -125,7 +121,7 @@ module lorenz96
             ! Sum all z's for each y, making an n_x*n_y length vector of z sums
             sum_z = sum(reshape(z, (/n_z,n_x*n_y/)), dim=1)
 
-            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y*y
+            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - c*y
             dYdT = dYdT + (h*c/b)*x_rpt
             dYdT = dYdT - (h*e/d)*sum_z
         end function
@@ -141,7 +137,7 @@ module lorenz96
             ! Repeat elements of y n_z times
             y_rpt = (/ (y(1+(k-1)/n_z), k = 1, n_x*n_y*n_z) /)
 
-            dZdT = e*b*cshift(z,-1)*(cshift(z,1)-cshift(z,-2)) - g_Z*Z
+            dZdT = e*b*cshift(z,-1)*(cshift(z,1)-cshift(z,-2)) - g_Z*e*Z
             dZdT = dZdT + (h*e/d)*y_rpt
         end function
         
@@ -198,7 +194,7 @@ module lorenz96
             {{ type.code }}, dimension(n_x*n_y) :: x_rpt
             {{ type.code }}, dimension(n_x*n_y) :: tend_z
             {{ type.code }}, dimension(5) :: coeffs
-            {{ type.code }} :: h_, c_, b_, g_Y_
+            {{ type.code }} :: h_, c_, b_
             integer :: k
 
             coeffs(1) = 0.001892_dp
@@ -210,7 +206,6 @@ module lorenz96
             h_ = h
             c_ = c
             b_ = b
-            g_Y_ = g_Y
 
             ! Repeat elements of x n_y times
             x_rpt = (/ (x(1+(k-1)/n_y), k = 1, n_x*n_y) /)
@@ -220,7 +215,7 @@ module lorenz96
             tend_z = (coeffs(1)*y**4) + (coeffs(2)*y**3) + &
                 & (coeffs(3)*y**2) + (coeffs(4)*y) + coeffs(5)
                 
-            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - g_Y_*y
+            dYdT = c*b*cshift(y,1)*(cshift(y,-1)-cshift(y,2)) - c_*y
             dYdT = dYdT + (h_*c_/b_)*x_rpt        
             dYdT = dYdT - (tend_z + stoch)
         end function
