@@ -2,15 +2,16 @@ module analysis
     use params
     use utils
     use observation
+    use local
 
     implicit none
 
     contains
-        function ensrf_assimilate(ensemble, obs_vec, R) result(analy)
-            PRECISION, dimension(state_dim, n_ens), intent(in) :: ensemble
-            real(dp), dimension(obs_dim), intent(in) :: obs_vec
+        function ensrf_assimilate(background, obs, R) result(analysis)
+            PRECISION, dimension(state_dim, n_ens), intent(in) :: background
+            real(dp), dimension(obs_dim), intent(in) :: obs
             real(dp), dimension(obs_dim, obs_dim), intent(in) :: R
-            PRECISION, dimension(state_dim, n_ens) :: analy, X_f
+            PRECISION, dimension(state_dim, n_ens) :: analysis, X_f
             PRECISION, dimension(state_dim) :: ens_mean
             PRECISION, dimension(state_dim) :: P_f_H_T, gain
             PRECISION :: alpha, HP_f_H_T, one, rho
@@ -20,11 +21,11 @@ module analysis
             rho = 1.02_dp
 
             ! Mean ensemble vector
-            ens_mean = (/ (sum_1d(ensemble(j, :))/real(n_ens) , j = 1, state_dim) /)
+            ens_mean = (/ (sum_1d(background(j, :))/real(n_ens) , j = 1, state_dim) /)
 
-            ! Form the ensemble perturbation matrix (with covariance inflation)
+            ! Form the background ensemble perturbation matrix (with covariance inflation)
             do i = 1, n_ens
-                X_f(:, i) = rho * (ensemble(:, i) - ens_mean)
+                X_f(:, i) = rho * (background(:, i) - ens_mean)
             end do
 
             ! Sequentially process observations
@@ -37,8 +38,11 @@ module analysis
                 ! Kalman gain
                 gain = P_f_H_T / (HP_f_H_T + R(i, i))
 
+                ! Localize Y variables
+                gain(n_x+1:n_x+n_x*n_y) = localize(gain(n_x+1:n_x+n_x*n_y), i)
+
                 ! Update ensemble mean
-                ens_mean = ens_mean + gain * (obs_vec(i) - observe(ens_mean, i))
+                ens_mean = ens_mean + gain * (obs(i) - observe(ens_mean, i))
 
                 ! Update pertubations
                 alpha = one/(one+sqrt(R(i,i)/(HP_f_H_T+R(i,i))))
@@ -49,7 +53,7 @@ module analysis
 
             ! Form final ensemble
             do i = 1, n_ens
-                analy(:, i) = ens_mean + X_f(:, i)
+                analysis(:, i) = ens_mean + X_f(:, i)
             end do
         end function ensrf_assimilate
-end module analysis
+end module
