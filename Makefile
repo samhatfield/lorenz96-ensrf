@@ -17,7 +17,7 @@ rpe: main
 
 # Main target: main executable
 main: main.o params.o lorenz96.o analysis.o metadata.o utils.o observation.o
-	$(FC) -o $@ $^ -lblas -lrpe -Lrpe/lib
+	$(FC) $(COMPARGS) -o $@ $^ -lblas -lrpe -Lrpe/lib
 
 # Dependencies
 main.o: params.o lorenz96.o utils.o analysis.o metadata.o observation.o
@@ -30,8 +30,8 @@ observation.o: params.o
 # Build rules
 %.o: %.f90
 	python parse.py $<
-	$(FC) -c -cpp -DPRECISION='$(PRECISION)' out.$< -o $(basename $<).o -Irpe/modules
+	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' out.$< -o $(basename $<).o -Irpe/modules
 
 .PHONY: clean
 clean:
-	rm -f *.o *.mod out.*.f90
+	rm -f *.o *.mod out.*.f90 main
