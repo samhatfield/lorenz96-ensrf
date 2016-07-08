@@ -38,6 +38,13 @@ module analysis
                 ! Kalman gain
                 gain = P_f_H_T / (HP_f_H_T + R(i, i))
 
+                ! Localize X variables
+                do j = 1, n_x
+                    if (j .ne. int((i-1)/n_y)+1) then
+                        gain(j) = 0.0_dp
+                    end if
+                end do
+
                 ! Localize Y variables
                 gain(n_x+1:n_x+n_x*n_y) = localize(gain(n_x+1:n_x+n_x*n_y), i)
 
