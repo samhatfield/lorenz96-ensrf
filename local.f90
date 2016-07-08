@@ -1,19 +1,20 @@
 module local
     use params
+    use rp_emulator
 
     implicit none
 
     contains
         function localize(gain, y) result(local_gain)
-            real(dp), intent(in) :: gain(obs_dim)
+            PRECISION, intent(in) :: gain(obs_dim)
             integer, intent(in) :: y
-            real(dp) :: local_gain(obs_dim)
-            real(dp), save :: mask(obs_dim)
-            real(dp) :: factor, a
+            PRECISION :: local_gain(obs_dim)
+            PRECISION, save :: mask(obs_dim)
+            PRECISION :: a
             logical, save :: first_call = .True.
             integer :: i, j
 
-            a = 64.0_dp
+            a = loc
 
             if (first_call) then
                 do i = 0, obs_dim-1

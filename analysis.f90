@@ -14,18 +14,18 @@ module analysis
             PRECISION, dimension(state_dim, n_ens) :: analysis, X_f
             PRECISION, dimension(state_dim) :: ens_mean
             PRECISION, dimension(state_dim) :: P_f_H_T, gain
-            PRECISION :: alpha, HP_f_H_T, one, rho
+            PRECISION :: alpha, HP_f_H_T, one, rho_
             integer :: i, j
 
             one = 1.0_dp
-            rho = 1.02_dp
+            rho_ = rho
 
             ! Mean ensemble vector
             ens_mean = (/ (sum_1d(background(j, :))/real(n_ens) , j = 1, state_dim) /)
 
             ! Form the background ensemble perturbation matrix (with covariance inflation)
             do i = 1, n_ens
-                X_f(:, i) = rho * (background(:, i) - ens_mean)
+                X_f(:, i) = rho_ * (background(:, i) - ens_mean)
             end do
 
             ! Sequentially process observations

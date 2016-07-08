@@ -21,7 +21,7 @@ module params
     integer, parameter :: state_dim = n_x + n_x*n_y
     
     ! Number of ensemble members
-    integer, parameter :: n_ens = 50
+    integer, parameter :: n_ens = 40
 
     ! Frequency of assimilations, i.e. 1 = every timestep
     integer, parameter :: assim_freq = 1
@@ -34,4 +34,10 @@ module params
 
     ! Default significand
     integer, parameter :: sbits = 10
+
+    ! Covariance inflation factor
+    real(dp), parameter :: rho = 1.02
+
+    ! Covariance localisation length scale (for Y variables)
+    real(dp), parameter :: loc = 27
 end module params
