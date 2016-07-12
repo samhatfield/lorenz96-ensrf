@@ -18,13 +18,10 @@ program main
     ! Loop counters
     integer :: i, j
 
-    real(dp), dimension(truth_dim) :: initial_truth
     real(dp), dimension(truth_dim, n_steps) :: truth_run
     real(dp), dimension(obs_dim, n_steps) :: obs
     PRECISION, dimension(state_dim, n_ens) :: ensemble
     real(dp), dimension(obs_dim, obs_dim) :: obs_covar
-    PRECISION, dimension(truth_dim) :: climatology_mean
-    PRECISION, dimension(truth_dim) :: climatology_std
     real(dp) :: rand
 
     ! For storing norms of each ensemble member (used for output)
@@ -49,14 +46,14 @@ program main
     write(*,*) "Spinning up..."
 
     ! Initial conditions for spin up
-    initial_truth(:n_x) = (/ (8, i = 1, n_x) /)
-    initial_truth(n_x+1:n_x+n_x*n_y) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y) /)
-    initial_truth(n_x+n_x*n_y+1:) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y*n_z) /)
-    initial_truth(4) = 8.008_dp
+    truth_run(:n_x, 1) = (/ (8, i = 1, n_x) /)
+    truth_run(n_x+1:n_x+n_x*n_y, 1) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y) /)
+    truth_run(n_x+n_x*n_y+1:, 1) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y*n_z) /)
+    truth_run(4, 1) = 8.008_dp
 
     ! Spin up
     do i = 1, 5000
-        initial_truth = step(initial_truth)
+        truth_run(:, 1) = step(truth_run(:, 1))
     end do
 
     !===========================================================================
@@ -65,7 +62,6 @@ program main
 
     write(*,*) "Generating truth..."
 
-    truth_run(:, 1) = initial_truth
     do i = 2, n_steps
         truth_run(:, i) = step(truth_run(:, i-1))
     end do
@@ -123,8 +119,8 @@ program main
 
     open(unit=file_1, file="results.yml", action="write", position="append")
     do i = 1, n_steps
-       ! Print every 100th timestep
-        if (mod(i, 100) == 0) then
+       ! Print every 1000th timestep
+        if (mod(i, 1000) == 0) then
             write(*,*) 'Step ', i 
         end if
 
