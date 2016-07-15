@@ -42,6 +42,13 @@ module utils
         {% endfor %}
     end interface
 
+    public :: rmse_mean
+    interface rmse_mean
+        {% for type in types %}
+        module procedure rmse_mean_{{ type.name }}
+        {% endfor %}
+    end interface rmse_mean
+
     public :: real
     interface real
         module procedure rpe_to_real
@@ -110,6 +117,20 @@ module utils
         	do i = 1, n
         		sum_1d = sum_1d + array(i)
         	end do
+        end function
+
+        function rmse_mean_{{ type.name }}(ensemble, truth) result(rmse_mean)
+            {{ type.code }}, dimension(state_dim, n_ens) :: ensemble
+            real(dp), dimension(truth_dim) :: truth
+            real(dp), dimension(n_x) :: ens_mean
+            real(dp) :: rmse_mean
+            integer :: i
+
+            rmse_mean = 0.0_dp
+
+            ens_mean = (/ (sum_1d(ensemble(i, :))/real(n_ens) , i = 1, n_x) /)
+
+            rmse_mean = sqrt(sum((ens_mean - truth(:n_x))**2)/real(n_x,dp))
         end function
         {% endfor %}
 
