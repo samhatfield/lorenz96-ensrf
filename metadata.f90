@@ -14,7 +14,7 @@ module metadata
             3 format(a6, i4)
             4 format(a11, i3)
             5 format(a8, f5.2)
-            6 format(a4, f6.2)
+            6 format(a4, f7.2)
             7 format(a3, f6.2)
             8 format(a8, i5)
             9 format(a6, f7.4)
