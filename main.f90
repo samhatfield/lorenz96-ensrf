@@ -23,6 +23,7 @@ program main
     use setup, only: write_params, spin_up, gen_ensemble, time_seed
     use rp_emulator
     use observation, only: observe
+    use io, only: setup_output, output
 
     implicit none
 
@@ -105,10 +106,11 @@ program main
     ensemble = gen_ensemble(truth)
 
     !===========================================================================
-    ! Write metadata to top of output file
+    ! Setup output
     !===========================================================================
 
     call write_params()
+    call setup_output()
 
     !===========================================================================
     ! Run filter
@@ -133,6 +135,10 @@ program main
         x_norms = norm2(real(ensemble(:n_x,:)), 1)
         write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
             & norm2(truth(:n_x,i))
+
+        if (mod(i, write_freq) == 0) then
+            call output(ensemble, truth)
+        end if
 
         ! Forecast step
         do j = 1, n_ens

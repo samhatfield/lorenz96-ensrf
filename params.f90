@@ -4,6 +4,9 @@ module params
     integer, parameter :: dp = kind(0.d0)
     integer, parameter :: sp = kind(0.0)
 
+    ! Frequency with which to write output
+    integer, parameter :: write_freq = 100
+
     !Start and end times, and number of time steps
     real(dp), parameter :: dt = 0.005_dp
     real(dp), parameter :: fin = 12_dp

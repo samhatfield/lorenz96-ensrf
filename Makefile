@@ -16,16 +16,19 @@ single: main
 rpe: main
 
 # Main target: main executable
-main: main.o params.o lorenz96.o analysis.o setup.o utils.o observation.o
-	$(FC) $(COMPARGS) -o $@ $^ -lblas -lrpe -Lrpe/lib
+main: main.o params.o lorenz96.o analysis.o setup.o utils.o observation.o io.o
+	$(FC) $(COMPARGS) -o $@ $^ -lblas -lrpe -Lrpe/lib -L/usr/lib -lnetcdff -lnetcdf
 
 # Dependencies
-main.o: params.o lorenz96.o utils.o analysis.o setup.o observation.o
+main.o: params.o lorenz96.o utils.o analysis.o setup.o observation.o io.o
 lorenz96.o: params.o utils.o
 utils.o: params.o
 analysis.o: params.o utils.o observation.o
 setup.o: params.o lorenz96.o utils.o
 observation.o: params.o
+io.o: params.o 
+	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' io.f90 -o io.o -Irpe/modules -I/usr/include
+
 
 # Build rules
 %.o: %.f90
