@@ -1,0 +1,8 @@
+*~
+figures
+results
+*swp
+*.mod
+*.o
+out.*.f90
+main
