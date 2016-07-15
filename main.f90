@@ -36,6 +36,8 @@ program main
 
     RPE_DEFAULT_SBITS = sbits
 
+    RPE_IEEE_HALF = .true.
+
     ! Seed
     call time_seed()
 
