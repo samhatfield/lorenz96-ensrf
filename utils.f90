@@ -162,7 +162,15 @@ module utils
             std = sum((/ ((vars(j) - mean)**2, j = 1, n) /))
             std = sqrt(std / real(n, dp))
         end function
-        
+
+        ! Generate identity matrix
+        function identity(dimen)
+            integer, intent(in) :: dimen
+            real(dp) :: identity(dimen, dimen)
+            integer :: i, j
+
+            forall(i = 1:dimen, j = 1:dimen) identity(i, j) = real((i/j)*(j/i), dp)
+        end function
  
         !===========================================================================
         ! Reduced precision utils

@@ -1,16 +1,33 @@
+!> @author
+!> Sam Hatfield, AOPP, University of Oxford
+!> @brief
+!> An observing system simulation experiment (OSSE) using the three-tier Lorenz
+!> '96/'95 system as the truth, a two tier system as the model, and the
+!> ensemble square root filter to assimilate observations. A reduced precision
+!> emulator is included, allowing the precision of the forecast and update
+!> cycles to be reduced.
+!> The token 'PRECISION' is substituted with the specified precision during
+!> compilation. The truth and observations are always in double precision.
+!>
+!> Bibliography
+!> ============
+!> Thornes et al., "On the Use of Scale-Dependent Precision in Earth-
+!> System Modelling", Q. J. Roy. Meteor. Soc. 2016 (in print)
+!> Whitaker and Hamill, "Ensemble Data Assimilation without Perturbed
+!> Observations", Mon. Weather. Rev. 130 (2002)
 program main
     use params
     use lorenz96, only: step, step_param_z
-    use utils, only: randn, time_seed, ar_1
-    use analysis
-    use metadata
+    use utils, only: randn, time_seed, ar_1, std, identity
+    use analysis, only: ensrf_assimilate
+    use setup, only: write_params, spin_up, gen_ensemble
     use rp_emulator
     use observation, only: observe
 
     implicit none
 
     !===========================================================================
-    ! Declare globals
+    ! Declare variables
     !===========================================================================
 
     integer, parameter :: file_1 = 20
@@ -18,67 +35,57 @@ program main
     ! Loop counters
     integer :: i, j
 
-    real(dp), dimension(truth_dim, n_steps) :: truth_run
-    real(dp), dimension(obs_dim, n_steps) :: obs
-    PRECISION, dimension(state_dim, n_ens) :: ensemble
-    real(dp), dimension(obs_dim, obs_dim) :: obs_covar
-    real(dp) :: rand
+    ! Truth run, observations, ensemble and observation covariance matrix
+    real(dp) :: truth(truth_dim, n_steps)
+    real(dp) :: obs(obs_dim, n_steps)
+    PRECISION :: ensemble(state_dim, n_ens)
+    real(dp) :: obs_covar(obs_dim, obs_dim)
 
     ! For storing norms of each ensemble member (used for output)
-    real(dp), dimension(n_ens) :: x_norms
+    real(dp) :: x_norms(n_ens)
 
     ! Stores stochastic components for each ensemble member
-    PRECISION, dimension(n_x*n_y, n_ens) :: stochs
+    PRECISION :: stochs(n_x*n_y, n_ens)
 
-    ! Literals
-    PRECISION :: zero
-    zero = 0.0_dp
-
+    ! Set up reduced precision emulator
     RPE_DEFAULT_SBITS = sbits
-
     RPE_IEEE_HALF = .true.
 
-    ! Seed
+    ! Initialize stochastic term matrix
+    stochs(:, :) = 0.0_dp
+
+    ! Seed RNG
     call time_seed()
 
     !===========================================================================
     ! Spin up
     !===========================================================================
 
-    write(*,*) "Spinning up..."
+    print *, "Spinning up..."
 
-    ! Initial conditions for spin up
-    truth_run(:n_x, 1) = (/ (8, i = 1, n_x) /)
-    truth_run(n_x+1:n_x+n_x*n_y, 1) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y) /)
-    truth_run(n_x+n_x*n_y+1:, 1) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y*n_z) /)
-    truth_run(4, 1) = 8.008_dp
-
-    ! Spin up
-    do i = 1, 5000
-        truth_run(:, 1) = step(truth_run(:, 1))
-    end do
+    truth(:, 1) = spin_up()
 
     !===========================================================================
     ! Truth run
     !===========================================================================
 
-    write(*,*) "Generating truth..."
+    print *, "Generating truth..."
 
     do i = 2, n_steps
-        truth_run(:, i) = step(truth_run(:, i-1))
+        truth(:, i) = step(truth(:, i-1))
     end do
 
     !===========================================================================
     ! Extract and perturb observations
     !===========================================================================
 
-    write(*,*) "Extracting observations..."
+    print *, "Extracting observations..."
 
     ! Make observations
-    obs = observe(truth_run) 
+    obs = observe(truth) 
 
-    ! Define observational error covariance matrix (diagonal matrix of variances)
-    forall(i = 1:obs_dim, j = 1:obs_dim) obs_covar(i, j) = y_var * (i/j)*(j/i)
+    ! Define observational error covariance matrix
+    obs_covar = y_var * identity(obs_dim)
 
     ! Perturb observations
     do i = 1, n_steps
@@ -91,21 +98,11 @@ program main
     ! Define ensemble
     !===========================================================================
 
-    write(*,*) "Generating ensemble..."
+    print *, "Generating ensemble..."
 
     ! Generate an ensemble by taking random samples from truth run
     ! (Equivalent to sampling the climatology)
-    do i = 1, n_ens
-        call random_number(rand)
-        j = ceiling(rand * n_steps)
-        ensemble(:, i) = truth_run(:n_x+n_x*n_y, j)
-    end do
-
-    !===========================================================================
-    ! Initialise stochastic components vector
-    !===========================================================================
-
-    stochs(:, :) = zero
+    ensemble = gen_ensemble(truth)
 
     !===========================================================================
     ! Write metadata to top of output file
@@ -117,7 +114,7 @@ program main
     ! Run filter
     !===========================================================================
 
-    write(*,*) "Running filter..."
+    print *, "Running filter..."
 
     open(unit=file_1, file="results.yml", action="write", position="append")
     do i = 1, n_steps
@@ -126,7 +123,7 @@ program main
             write(*,*) 'Step ', i 
         end if
 
-        ! Analysis step
+        ! Analysis step (only run every assim_freq steps)
         if (mod(i, assim_freq) == 0) then
             ensemble = ensrf_assimilate(ensemble, obs(:, i), obs_covar)
         end if
@@ -134,13 +131,15 @@ program main
         ! Write norm and std of X norms, rms forecast error and truth and
         ! observation vector norm for this timestep
         x_norms = norm2(real(ensemble(:n_x,:)), 1)
-
         write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
-            & norm2(truth_run(:n_x,i))
+            & norm2(truth(:n_x,i))
 
         ! Forecast step
         do j = 1, n_ens
+            ! Generate stochastic term
             stochs(:, j) = ar_1(stochs(:, j))
+
+            ! Step ensemble member forward
             ensemble(:, j) = step_param_z(ensemble(:, j), stochs(:, j))
         end do
     end do

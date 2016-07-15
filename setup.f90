@@ -1,10 +1,39 @@
-module metadata
+module setup
     use params
     use lorenz96
 
     implicit none
 
     contains
+        function spin_up() result(truth)
+            real(dp) :: truth(truth_dim)
+            integer :: i
+
+            ! Some random initial conditions (doesn't really matter)
+            truth(:n_x) = (/ (8, i = 1, n_x) /)
+            truth(n_x+1:n_x+n_x*n_y) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y) /)
+            truth(n_x+n_x*n_y+1:) = (/ (randn(0._dp, 0.5_dp), i = 1, n_x*n_y*n_z) /)
+            truth(4) = 8.008_dp
+
+            ! Spin up
+            do i = 1, 5000
+                truth = step(truth)
+            end do
+        end function
+
+        function gen_ensemble(truth) result(ensemble)
+            real(dp), intent(in) :: truth(truth_dim, n_steps)
+            PRECISION :: ensemble(state_dim, n_ens)
+            real(dp) :: rand
+            integer :: i, j
+
+            do i = 1, n_ens
+                call random_number(rand)
+                j = ceiling(rand * n_steps)
+                ensemble(:, i) = truth(:n_x+n_x*n_y, j)
+            end do
+        end function
+
         subroutine write_params()
             integer :: file_1 = 20
 
@@ -42,4 +71,4 @@ module metadata
 
             close(file_1)
         end subroutine write_params
-end module metadata
+end module

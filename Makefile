@@ -16,15 +16,15 @@ single: main
 rpe: main
 
 # Main target: main executable
-main: main.o params.o lorenz96.o analysis.o metadata.o utils.o observation.o local.o
+main: main.o params.o lorenz96.o analysis.o setup.o utils.o observation.o local.o
 	$(FC) $(COMPARGS) -o $@ $^ -lblas -lrpe -Lrpe/lib
 
 # Dependencies
-main.o: params.o lorenz96.o utils.o analysis.o metadata.o observation.o
+main.o: params.o lorenz96.o utils.o analysis.o setup.o observation.o
 lorenz96.o: params.o utils.o
 utils.o: params.o
 analysis.o: params.o utils.o observation.o local.o
-metadata.o: params.o lorenz96.o
+setup.o: params.o lorenz96.o
 observation.o: params.o
 local.o: params.o
 
