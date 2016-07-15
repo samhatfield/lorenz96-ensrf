@@ -181,7 +181,7 @@ module analysis
         !> @param[in] z_ the distance between the two grid-points/variables
         !> @param[in] c the localisation length scale
         !> @return C_0 the value of the function
-        function gaspari_cohn(z_, c) result(C_0)
+        pure function gaspari_cohn(z_, c) result(C_0)
             integer, intent(in) :: z_
             PRECISION, intent(in) :: c
             PRECISION :: z

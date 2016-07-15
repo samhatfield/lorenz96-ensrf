@@ -24,7 +24,7 @@ main.o: params.o lorenz96.o utils.o analysis.o setup.o observation.o
 lorenz96.o: params.o utils.o
 utils.o: params.o
 analysis.o: params.o utils.o observation.o
-setup.o: params.o lorenz96.o
+setup.o: params.o lorenz96.o utils.o
 observation.o: params.o
 
 # Build rules
