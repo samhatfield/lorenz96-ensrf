@@ -12,7 +12,7 @@
 !> dimensions", Q. J. R. Meterol. Soc 125 (1999)
 module analysis
     use params
-    use utils, only: matmul, sum_1d
+    use utils, only: matmul
     use observation, only: observe
     use rp_emulator
 
@@ -45,7 +45,7 @@ module analysis
             rho_ = rho
 
             ! Mean ensemble vector
-            ens_mean = (/ (sum_1d(background(j, :))/real(n_ens) , j = 1, state_dim) /)
+            ens_mean = (/ (sum(background(j, :))/real(n_ens) , j = 1, state_dim) /)
 
             ! Form the background ensemble perturbation matrix (with covariance
             ! inflation)

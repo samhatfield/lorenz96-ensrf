@@ -6,6 +6,7 @@ module setup
     use params
     use lorenz96
     use utils, only: randn
+    use rp_emulator
 
     implicit none
 

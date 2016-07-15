@@ -1,3 +1,9 @@
+!> @author
+!> Sam Hatfield, AOPP, University of Oxford
+!> @brief
+!> Contains various utility functions, e.g. for calculating statistics, sums.
+!> Jinja2 templates are used to generate overloaded functions of different
+!> precisions.
 module utils
     use params
     use rp_emulator
@@ -39,13 +45,6 @@ module utils
         module procedure matmulvec_rpe
     end interface
 
-    public :: sum_1d
-    interface sum_1d
-        {% for type in types %}
-        module procedure sum_1d_{{ type.name }}
-        {% endfor %}
-    end interface
-
     public :: rmse_mean
     interface rmse_mean
         {% for type in types %}
@@ -63,8 +62,15 @@ module utils
     !=========================================================================== 
 
     contains
-        ! Generates a random number drawn for the specified normal distribution
         {% for type in types %}
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Generates a random number drawn for the specified normal
+        !> distribution.
+        !> @param mean the mean of the distribution to draw from
+        !> @param stdev the standard deviation of the distribution to draw from
+        !> @return randn the generated random number
         function randn_{{ type.name }}(mean, stdev) result(randn)
             {{ type.code }}, intent(in) :: mean, stdev
             {{ type.code }} :: u, v, randn
@@ -78,7 +84,15 @@ module utils
             randn = mean + stdev * u * sin(v)
         end function
 
-        ! Zero mean AR(1) process
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Generates a random number drawn from an AR(1) process. This has been
+        !> tuned for parametrizing the Z variables in the two-layer Lorenz '96
+        !> model. See Wilkes, "Statistical Methods in the Atmospheric
+        !> Sciences", 3rd ed. p. 410.
+        !> @param last the last value of the process
+        !> @return e the next value of the process
         function ar_1_{{ type.name }}(last) result(e)
             {{ type.code }}, intent(in) :: last(n_x*n_y)
             {{ type.code }} :: e(n_x*n_y)
@@ -97,8 +111,13 @@ module utils
             e = phi * last + sqrt(1-phi**2) * z
         end function
 
-        ! Reduced precision sum of 2D array (returns 1D array, with sum of elements
-        ! along 1st dimension)
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Sum of 2D array (returns 1D array, with sum of elements along 1st
+        !> dimension).
+        !> @param array the input array
+        !> @return sum_2d the sum
         pure function sum_2d_{{ type.name }}(array) result(sum_2d)
             {{ type.code }}, intent(in) :: array(:,:)
         	{{ type.code }} :: sum_2d(size(array, 1))
@@ -113,20 +132,14 @@ module utils
         	end do
         end function
 
-        pure function sum_1d_{{ type.name }}(array) result(sum_1d)
-            {{ type.code }}, intent(in) :: array(:)
-            {{ type.code }} :: sum_1d
-        	integer :: i, n
-        	
-        	n = size(array)
-        	
-        	sum_1d = 0.0_dp
-        	
-        	do i = 1, n
-        		sum_1d = sum_1d + array(i)
-        	end do
-        end function
-
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> RMSE between ensemble mean and truth. Only computes RMSE across
+        !> X-variables.
+        !> @param ensemble the ensemble
+        !> @param truth the truth state vector
+        !> @return rmse_mean the RMSE of the ensemble mean
         function rmse_mean_{{ type.name }}(ensemble, truth) result(rmse_mean)
             {{ type.code }}, dimension(state_dim, n_ens) :: ensemble
             real(dp), dimension(truth_dim) :: truth
@@ -136,13 +149,18 @@ module utils
 
             rmse_mean = 0.0_dp
 
-            ens_mean = (/ (sum_1d(ensemble(i, :))/real(n_ens) , i = 1, n_x) /)
+            ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, n_x) /)
 
             rmse_mean = sqrt(sum((ens_mean - truth(:n_x))**2)/real(n_x,dp))
         end function
         {% endfor %}
 
-        ! Calculate (biased) standard deviation
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Calculates (biased) standard deviation of list of input variables.
+        !> @param vars the input data
+        !> @return std the standard deviation
         function std(vars)
             real(dp), intent(in) :: vars(:)
             real(dp) :: std
@@ -155,7 +173,12 @@ module utils
             std = sqrt(std / real(n, dp))
         end function
 
-        ! Generate identity matrix
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Generates an identity matrix of the given size.
+        !> @param dimen the dimension of the required identity matrix
+        !> @return identity the identity matrix (dimen x dimen)
         function identity(dimen)
             integer, intent(in) :: dimen
             real(dp) :: identity(dimen, dimen)
@@ -168,7 +191,13 @@ module utils
         ! Reduced precision utils
         !=========================================================================== 
         
-        ! Reduced precision matrix multiplication
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> A reduced precision matrix multiplier.
+        !> @param mat1 the first matrix
+        !> @param mat2 the second matrix
+        !> @return matmul_rpe the multiplied matrix
         function matmul_rpe(mat1, mat2)
             type(rpe_var), intent(in) :: mat1(:,:), mat2(:,:)
             type(rpe_var) :: matmul_rpe(size(mat1, 1), size(mat2, 2))
@@ -185,7 +214,13 @@ module utils
             end do
         end function matmul_rpe
 
-        ! Reduced precision matrix-vector multiplication
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> A reduced precision matrix-vector multiplier.
+        !> @param mat1 the matrix
+        !> @param mat2 the vector
+        !> @return matmul_rpe the vector pre-multiplied by the matrix
         function matmulvec_rpe(mat, vec)
             type(rpe_var), intent(in) :: mat(:,:), vec(:)
             type(rpe_var) :: matmulvec_rpe(size(mat, 1))
@@ -199,9 +234,15 @@ module utils
             end do
         end function matmulvec_rpe
         
-        elemental real pure function rpe_to_real(rpe_input)
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Casts an rpe variable to a real value.
+        !> @param rpe_input the input rpe variable
+        !> @return rpe_to_real the double precision real value
+        elemental real(dp) pure function rpe_to_real(rpe_input)
             type(rpe_var), intent(in) :: rpe_input
 
             rpe_to_real = rpe_input%val
         end function rpe_to_real
-end module utils
+end module
