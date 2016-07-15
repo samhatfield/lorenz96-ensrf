@@ -18,9 +18,9 @@
 program main
     use params
     use lorenz96, only: step, step_param_z
-    use utils, only: randn, time_seed, ar_1, std, identity
+    use utils, only: randn, ar_1, std, identity
     use analysis, only: ensrf_assimilate
-    use setup, only: write_params, spin_up, gen_ensemble
+    use setup, only: write_params, spin_up, gen_ensemble, time_seed
     use rp_emulator
     use observation, only: observe
 

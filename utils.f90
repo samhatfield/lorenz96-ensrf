@@ -4,9 +4,13 @@ module utils
 
     implicit none
 
+    private
+
     !===========================================================================
     ! Overloaded functions
     !=========================================================================== 
+
+    public std, identity
 
     public :: randn
     interface randn
@@ -53,6 +57,10 @@ module utils
     interface real
         module procedure rpe_to_real
     end interface
+
+    !===========================================================================
+    ! Function definitions
+    !=========================================================================== 
 
     contains
         ! Generates a random number drawn for the specified normal distribution
@@ -133,22 +141,6 @@ module utils
             rmse_mean = sqrt(sum((ens_mean - truth(:n_x))**2)/real(n_x,dp))
         end function
         {% endfor %}
-
-        ! Seeds from system clock
-        subroutine time_seed()
-          integer :: i, n, clock
-          integer, dimension(:), allocatable :: seed
-        
-          call random_seed(size = n)
-          allocate(seed(n))
-        
-          call system_clock(count=clock)
-        
-          seed = clock + 37 * (/ (i - 1, i = 1, n) /)
-          call random_seed(put = seed)
-        
-          deallocate(seed)
-        end subroutine
 
         ! Calculate (biased) standard deviation
         function std(vars)

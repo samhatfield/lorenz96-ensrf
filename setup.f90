@@ -1,3 +1,7 @@
+!> @author
+!> Sam Hatfield, AOPP, University of Oxford
+!> @brief
+!> Contains various functions and subroutines for setting up the assimilation.
 module setup
     use params
     use lorenz96
@@ -5,7 +9,17 @@ module setup
 
     implicit none
 
+    private
+    
+    public spin_up, gen_ensemble, write_params, time_seed
+
     contains
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Spins up the truth run.
+        !> @return truth the spun-up state vector used for generating the truth
+        !> run
         function spin_up() result(truth)
             real(dp) :: truth(truth_dim)
             integer :: i
@@ -22,6 +36,13 @@ module setup
             end do
         end function
 
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Generate the first background ensemble by sampling from the truth
+        !> run.
+        !> @param truth the truth run to sample from
+        !> @return ensemble the generated ensemble
         function gen_ensemble(truth) result(ensemble)
             real(dp), intent(in) :: truth(truth_dim, n_steps)
             PRECISION :: ensemble(state_dim, n_ens)
@@ -35,6 +56,30 @@ module setup
             end do
         end function
 
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Seeds RNG from system clock.
+        subroutine time_seed()
+          integer :: i, n, clock
+          integer, allocatable :: seed(:)
+        
+          call random_seed(size = n)
+          allocate(seed(n))
+        
+          call system_clock(count=clock)
+        
+          seed = clock + 37 * (/ (i - 1, i = 1, n) /)
+          call random_seed(put = seed)
+        
+          deallocate(seed)
+        end subroutine
+
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Writes the header of the output YAML file. This is basically just a
+        !> list of key-value pairs giving the parameters for this run.
         subroutine write_params()
             integer :: file_1 = 20
 
