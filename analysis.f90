@@ -39,14 +39,10 @@ module analysis
                 gain = P_f_H_T / (HP_f_H_T + R(i, i))
 
                 ! Localize X variables
-                do j = 1, n_x
-                    if (j .ne. int((i-1)/n_y)+1) then
-                        gain(j) = 0.0_dp
-                    end if
-                end do
+                gain(:n_x) = localize_x(gain(:n_x), i)
 
                 ! Localize Y variables
-                gain(n_x+1:n_x+n_x*n_y) = localize(gain(n_x+1:n_x+n_x*n_y), i)
+                gain(n_x+1:n_x+n_x*n_y) = localize_y(gain(n_x+1:n_x+n_x*n_y), i)
 
                 ! Update ensemble mean
                 ens_mean = ens_mean + gain * (obs(i) - observe(ens_mean, i))

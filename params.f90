@@ -29,15 +29,17 @@ module params
     ! Observation error variance
     real(dp), parameter :: y_var = 0.1_dp
 
-    ! Observe only Y variables
+    ! Dimension of observation vector
     integer, parameter :: obs_dim = n_x*n_y
 
     ! Default significand
     integer, parameter :: sbits = 10
 
     ! Covariance inflation factor
-    real(dp), parameter :: rho = 1.02
+    real(dp), parameter :: rho = 1.003_dp
 
-    ! Covariance localisation length scale (for Y variables)
-    real(dp), parameter :: loc = 27
+    ! Covariance localisation length scales
+    real(dp), parameter :: loc = 1.2_dp
+    real(dp), parameter :: loc_y = loc*26
+    real(dp), parameter :: loc_x = loc*8
 end module params
