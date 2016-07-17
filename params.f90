@@ -5,7 +5,11 @@ module params
     integer, parameter :: sp = kind(0.0)
 
     ! Frequency with which to write output
-    integer, parameter :: write_freq = 100
+    integer, parameter :: write_freq = 50
+
+    ! Write reduced output? .true. : ens-mean rmse only, .false. all x
+    ! variables of each ensemble member and truth
+    logical, parameter :: reduced = .false.
 
     !Start and end times, and number of time steps
     real(dp), parameter :: dt = 0.005_dp
@@ -39,10 +43,10 @@ module params
     integer, parameter :: sbits = 10
 
     ! Covariance inflation factor
-    real(dp), parameter :: rho = 1.003_dp
+    real(dp), parameter :: rho = 1.02_dp
 
     ! Covariance localisation length scales
-    real(dp), parameter :: loc = 1.2_dp
+    real(dp), parameter :: loc = 1.0_dp
     real(dp), parameter :: loc_y = loc*26
     real(dp), parameter :: loc_x = loc*8
 end module params

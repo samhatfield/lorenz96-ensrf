@@ -6,13 +6,15 @@ module io
     use rp_emulator
     use params
     use netcdf
+    use utils, only: real, rmse_mean
 
     implicit none
 
     private
-    public setup_output, output
+    public setup_output, output, open_file, close_file
 
-    integer :: ncid, timedim, xdim, truthx, ensdim, ensx
+    integer :: ncid, timedim, xdim, truthx, ensdim, ensx, rmsemeanx
+    logical :: reduced_
 
     contains
         !> @author
@@ -26,7 +28,7 @@ module io
             character(len=41) :: git_rev
 
             ! Create NetCDF output file
-            call check(nf90_create('results.nc', nf90_clobber, ncid))
+            call check(nf90_create('output.nc', nf90_clobber, ncid))
 
             ! Get git revision
             call execute_command_line('git rev-parse HEAD > out.txt')
@@ -48,12 +50,26 @@ module io
 
             ! Define variables
             call check(nf90_def_dim(ncid, "time", nf90_unlimited, timedim))
-            call check(nf90_def_dim(ncid, "x", n_x, xdim))
-            call check(nf90_def_dim(ncid, "ens", n_ens, ensdim))
-            call check(nf90_def_var(ncid, "truthx", nf90_real4, (/ xdim, timedim /), truthx))
-            call check(nf90_def_var(ncid, "ensx", nf90_real4, (/ xdim, ensdim, timedim /), ensx))
-            call check(nf90_enddef(ncid))
 
+            ! Write reduced output?
+            if (reduced) then
+                call check(nf90_def_var(ncid, "rmse_mean", nf90_real4, timedim, rmsemeanx))
+            else
+                call check(nf90_def_dim(ncid, "x", n_x, xdim))
+                call check(nf90_def_dim(ncid, "ens", n_ens, ensdim))
+                call check(nf90_def_var(ncid, "truthx", nf90_real4, (/ xdim, timedim /), truthx))
+                call check(nf90_def_var(ncid, "ensx", nf90_real4, (/ xdim, ensdim, timedim /), ensx))
+            end if
+
+            call check(nf90_enddef(ncid))
+            call check(nf90_close(ncid))
+        end subroutine
+
+        subroutine open_file()
+            call check(nf90_open('output.nc', nf90_write, ncid))
+        end subroutine
+
+        subroutine close_file()
             call check(nf90_close(ncid))
         end subroutine
 
@@ -69,10 +85,13 @@ module io
             real(dp), intent(in) :: truth(truth_dim)
             integer, intent(in) :: i
 
-            call check(nf90_open('results.nc', nf90_write, ncid))
-            call check(nf90_put_var(ncid, truthx, truth(:n_x), (/ 1, i /)))
-            call check(nf90_put_var(ncid, ensx, ensemble(:n_x, :), (/ 1, 1, i /)))
-            call check(nf90_close(ncid))
+            ! Write reduced output?
+            if (reduced) then
+                call check(nf90_put_var(ncid, rmsemeanx, rmse_mean(ensemble, truth), (/ i /)))
+            else
+                call check(nf90_put_var(ncid, truthx, truth(:n_x), (/ 1, i /)))
+                call check(nf90_put_var(ncid, ensx, real(ensemble(:n_x, :)), (/ 1, 1, i /)))
+            end if
         end subroutine
 
         !> @author

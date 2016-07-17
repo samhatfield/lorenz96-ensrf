@@ -23,7 +23,7 @@ program main
     use setup, only: write_params, spin_up, gen_ensemble, time_seed
     use rp_emulator
     use observation, only: observe
-    use io, only: setup_output, output
+    use io, only: setup_output, output, open_file, close_file
 
     implicit none
 
@@ -112,10 +112,11 @@ program main
 
     print *, "Running filter..."
 
+    call open_file()
     do i = 1, n_steps
        ! Print every 1000th timestep
         if (mod(i, 1000) == 0) then
-            write(*,*) 'Step ', i 
+            print *, 'Step ', i 
         end if
 
         ! Analysis step (only run every assim_freq steps)
@@ -137,4 +138,5 @@ program main
             ensemble(:, j) = step_param_z(ensemble(:, j), stochs(:, j))
         end do
     end do
+    call close_file()
 end program main
