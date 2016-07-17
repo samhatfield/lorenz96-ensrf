@@ -26,7 +26,7 @@ utils.o: params.o
 analysis.o: params.o utils.o observation.o
 setup.o: params.o lorenz96.o utils.o
 observation.o: params.o
-io.o: params.o 
+io.o: params.o io.f90
 	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' io.f90 -o io.o -Irpe/modules -I/usr/include
 
 

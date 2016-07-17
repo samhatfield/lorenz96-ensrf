@@ -31,8 +31,6 @@ program main
     ! Declare variables
     !===========================================================================
 
-    integer, parameter :: file_1 = 20
-
     ! Loop counters
     integer :: i, j
 
@@ -41,9 +39,6 @@ program main
     real(dp) :: obs(obs_dim, n_steps)
     PRECISION :: ensemble(state_dim, n_ens)
     real(dp) :: obs_covar(obs_dim, obs_dim)
-
-    ! For storing norms of each ensemble member (used for output)
-    real(dp) :: x_norms(n_ens)
 
     ! Stores stochastic components for each ensemble member
     PRECISION :: stochs(n_x*n_y, n_ens)
@@ -109,7 +104,6 @@ program main
     ! Setup output
     !===========================================================================
 
-    call write_params()
     call setup_output()
 
     !===========================================================================
@@ -118,7 +112,6 @@ program main
 
     print *, "Running filter..."
 
-    open(unit=file_1, file="results.yml", action="write", position="append")
     do i = 1, n_steps
        ! Print every 1000th timestep
         if (mod(i, 1000) == 0) then
@@ -130,14 +123,9 @@ program main
             ensemble = ensrf_assimilate(ensemble, obs(:, i), obs_covar)
         end if
 
-        ! Write norm and std of X norms, rms forecast error and truth and
-        ! observation vector norm for this timestep
-        x_norms = norm2(real(ensemble(:n_x,:)), 1)
-        write (file_1, '(6f11.6)') sum(x_norms)/real(n_ens, dp), std(x_norms), &
-            & norm2(truth(:n_x,i))
-
+        ! Write output
         if (mod(i, write_freq) == 0) then
-            call output(ensemble, truth)
+            call output(ensemble, truth(:, i), i / write_freq)
         end if
 
         ! Forecast step
@@ -149,5 +137,4 @@ program main
             ensemble(:, j) = step_param_z(ensemble(:, j), stochs(:, j))
         end do
     end do
-    close(file_1)
 end program main
