@@ -7,8 +7,8 @@ module params
     ! Frequency with which to write output
     integer, parameter :: write_freq = 50
 
-    ! Write reduced output? .true. : ens-mean rmse only, .false. all x
-    ! variables of each ensemble member and truth
+    ! Write reduced output? .true. : stats only, .false. all x
+    ! variables of each ensemble member and truth, plus stats
     logical, parameter :: reduced = .false.
 
     !Start and end times, and number of time steps

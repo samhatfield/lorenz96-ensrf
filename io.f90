@@ -51,10 +51,11 @@ module io
             ! Define variables
             call check(nf90_def_dim(ncid, "time", nf90_unlimited, timedim))
 
-            ! Write reduced output?
-            if (reduced) then
-                call check(nf90_def_var(ncid, "rmse_mean", nf90_real4, timedim, rmsemeanx))
-            else
+            ! Write stats
+            call check(nf90_def_var(ncid, "rmse_mean", nf90_real4, timedim, rmsemeanx))
+
+            ! Write full output?
+            if (.not. reduced) then
                 call check(nf90_def_dim(ncid, "x", n_x, xdim))
                 call check(nf90_def_dim(ncid, "ens", n_ens, ensdim))
                 call check(nf90_def_var(ncid, "truthx", nf90_real4, (/ xdim, timedim /), truthx))
@@ -85,10 +86,11 @@ module io
             real(dp), intent(in) :: truth(truth_dim)
             integer, intent(in) :: i
 
-            ! Write reduced output?
+            ! Write stats
+            call check(nf90_put_var(ncid, rmsemeanx, rmse_mean(ensemble, truth), (/ i /)))
+            
+            ! Write full output?
             if (reduced) then
-                call check(nf90_put_var(ncid, rmsemeanx, rmse_mean(ensemble, truth), (/ i /)))
-            else
                 call check(nf90_put_var(ncid, truthx, truth(:n_x), (/ 1, i /)))
                 call check(nf90_put_var(ncid, ensx, real(ensemble(:n_x, :)), (/ 1, 1, i /)))
             end if
