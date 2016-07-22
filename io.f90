@@ -13,7 +13,7 @@ module io
     private
     public setup_output, output, open_file, close_file
 
-    integer :: ncid, timedim, xdim, truthx, ensdim, ensx, rmsemeanx
+    integer :: ncid, timedim, timevar, xdim, xvar, truthx, ensdim, ensvar, ensx, rmsemeanx
     logical :: reduced_
 
     contains
@@ -41,23 +41,27 @@ module io
             call check(nf90_put_att(ncid, nf90_global, "name", "Sam Hatfield"))
             call check(nf90_put_att(ncid, nf90_global, "institution",&
                 & "AOPP, University of Oxford"))
-            call check(nf90_put_att(ncid, nf90_global, "y_var", y_var))
+            call check(nf90_put_att(ncid, nf90_global, "observation variance", y_var))
             call check(nf90_put_att(ncid, nf90_global, "inflation", rho))
             call check(nf90_put_att(ncid, nf90_global, "localisation", loc))
             call check(nf90_put_att(ncid, nf90_global,&
                 & "assimilation frequency",assim_freq))
+            call check(nf90_put_att(ncid, nf90_global, "timestep", dt))
             call check(nf90_put_att(ncid, nf90_global, "git-rev", git_rev))
 
-            ! Define variables
+            ! Define time
             call check(nf90_def_dim(ncid, "time", nf90_unlimited, timedim))
+            call check(nf90_def_var(ncid, "time", nf90_real4, timedim, timevar))
 
-            ! Write stats
+            ! Define stats variables
             call check(nf90_def_var(ncid, "rmse_mean", nf90_real4, timedim, rmsemeanx))
 
             ! Write full output?
             if (.not. reduced) then
                 call check(nf90_def_dim(ncid, "x", n_x, xdim))
+                call check(nf90_def_var(ncid, "x", nf90_int, xdim, xvar))
                 call check(nf90_def_dim(ncid, "ens", n_ens, ensdim))
+                call check(nf90_def_var(ncid, "ens", nf90_int, ensdim, ensvar))
                 call check(nf90_def_var(ncid, "truthx", nf90_real4, (/ xdim, timedim /), truthx))
                 call check(nf90_def_var(ncid, "ensx", nf90_real4, (/ xdim, ensdim, timedim /), ensx))
             end if
@@ -85,14 +89,18 @@ module io
             PRECISION, intent(in) :: ensemble(state_dim, n_ens)
             real(dp), intent(in) :: truth(truth_dim)
             integer, intent(in) :: i
+            integer :: j
 
             ! Write stats
             call check(nf90_put_var(ncid, rmsemeanx, rmse_mean(ensemble, truth), (/ i /)))
+            call check(nf90_put_var(ncid, timevar, i * dt * write_freq, (/ i /)))
             
             ! Write full output?
-            if (reduced) then
+            if (.not. reduced) then
                 call check(nf90_put_var(ncid, truthx, truth(:n_x), (/ 1, i /)))
                 call check(nf90_put_var(ncid, ensx, real(ensemble(:n_x, :)), (/ 1, 1, i /)))
+                call check(nf90_put_var(ncid, xvar, (/ (j, j = 1, n_x) /), (/ 1 /)))
+                call check(nf90_put_var(ncid, ensvar, (/ (j, j = 1, n_ens) /), (/ 1 /)))
             end if
         end subroutine
 
