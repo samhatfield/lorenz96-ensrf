@@ -20,7 +20,7 @@ program main
     use lorenz96, only: step, step_param_z
     use utils, only: randn, ar_1, std, identity, real
     use analysis, only: ensrf_assimilate
-    use setup, only: write_params, spin_up, gen_ensemble, time_seed
+    use setup, only: spin_up, gen_ensemble, time_seed
     use rp_emulator
     use observation, only: observe
     use io, only: setup_output, output, open_file, close_file
