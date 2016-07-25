@@ -45,12 +45,19 @@ module utils
         module procedure matmulvec_rpe
     end interface
 
-    public :: rmse_mean
-    interface rmse_mean
+    public :: rmse_ens_mean
+    interface rmse_ens_mean
         {% for type in types %}
-        module procedure rmse_mean_{{ type.name }}
+        module procedure rmse_ens_mean_{{ type.name }}
         {% endfor %}
-    end interface rmse_mean
+    end interface rmse_ens_mean
+
+    public :: mean_ens_rmse
+    interface mean_ens_rmse
+        {% for type in types %}
+        module procedure mean_ens_rmse_{{ type.name }}
+        {% endfor %}
+    end interface mean_ens_rmse
 
     public :: real
     interface real
@@ -139,19 +146,38 @@ module utils
         !> X-variables.
         !> @param ensemble the ensemble
         !> @param truth the truth state vector
-        !> @return rmse_mean the RMSE of the ensemble mean
-        function rmse_mean_{{ type.name }}(ensemble, truth) result(rmse_mean)
+        !> @return rmse_ens_mean the RMSE of the ensemble mean
+        function rmse_ens_mean_{{ type.name }}(ensemble, truth) result(rmse_ens_mean)
             {{ type.code }}, dimension(state_dim, n_ens) :: ensemble
             real(dp), dimension(truth_dim) :: truth
             real(dp), dimension(n_x) :: ens_mean
-            real(dp) :: rmse_mean
+            real(dp) :: rmse_ens_mean
             integer :: i
-
-            rmse_mean = 0.0_dp
 
             ens_mean = (/ (sum(ensemble(i, :))/real(n_ens) , i = 1, n_x) /)
 
-            rmse_mean = sqrt(sum((ens_mean - truth(:n_x))**2)/real(n_x,dp))
+            rmse_ens_mean = sqrt(sum((ens_mean - truth(:n_x))**2)/real(n_x))
+        end function
+
+        !> @author
+        !> Sam Hatfield, AOPP, University of Oxford
+        !> @brief
+        !> Average RMSE of each ensemble member. Only computed over X-variables.
+        !> @param ensemble the ensemble
+        !> @param truth the truth state vector
+        !> @return mean_ens_rmse the mean of the RMSE of each ensemble member
+        function mean_ens_rmse_{{ type.name }}(ensemble, truth) result(mean_ens_rmse)
+            {{ type.code }}, dimension(state_dim, n_ens) :: ensemble
+            real(dp) :: truth(truth_dim)
+            real(dp) :: ens_mse(n_ens)
+            real(dp) :: mean_ens_rmse
+            integer :: i
+
+            ens_mse = (/ ( &
+                sum((ensemble(:n_x,i) - truth(:n_x))**2)/real(n_x), i = 1, n_ens &
+            & ) /)
+
+            mean_ens_rmse = sum(sqrt(ens_mse))/real(n_ens,dp)
         end function
         {% endfor %}
 

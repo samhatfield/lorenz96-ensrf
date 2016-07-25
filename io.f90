@@ -6,14 +6,16 @@ module io
     use rp_emulator
     use params
     use netcdf
-    use utils, only: real, rmse_mean
+    use utils, only: real, rmse_ens_mean, mean_ens_rmse
 
     implicit none
 
     private
     public setup_output, output, open_file, close_file
 
-    integer :: ncid, timedim, timevar, xdim, xvar, truthx, ensdim, ensvar, ensx, rmsemeanx
+    integer :: ncid
+    integer :: timedim, xdim, ensdim
+    integer :: timevar, xvar, truthx, ensvar, ensx, rmseensmeanx, meanensrmsex
     logical :: reduced_
 
     contains
@@ -54,7 +56,8 @@ module io
             call check(nf90_def_var(ncid, "time", nf90_real4, timedim, timevar))
 
             ! Define stats variables
-            call check(nf90_def_var(ncid, "rmse_mean", nf90_real4, timedim, rmsemeanx))
+            call check(nf90_def_var(ncid, "rmse_ens_mean", nf90_real4, timedim, rmseensmeanx))
+            call check(nf90_def_var(ncid, "mean_ens_rmse", nf90_real4, timedim, meanensrmsex))
 
             ! Write full output?
             if (.not. reduced) then
@@ -92,8 +95,9 @@ module io
             integer :: j
 
             ! Write stats
-            call check(nf90_put_var(ncid, rmsemeanx, rmse_mean(ensemble, truth), (/ i /)))
             call check(nf90_put_var(ncid, timevar, i * dt * write_freq, (/ i /)))
+            call check(nf90_put_var(ncid, rmseensmeanx, rmse_ens_mean(ensemble, truth), (/ i /)))
+            call check(nf90_put_var(ncid, meanensrmsex, mean_ens_rmse(ensemble, truth), (/ i /)))
             
             ! Write full output?
             if (.not. reduced) then
