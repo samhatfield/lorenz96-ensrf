@@ -43,12 +43,17 @@ module io
             call check(nf90_put_att(ncid, nf90_global, "name", "Sam Hatfield"))
             call check(nf90_put_att(ncid, nf90_global, "institution",&
                 & "AOPP, University of Oxford"))
-            call check(nf90_put_att(ncid, nf90_global, "observation variance", y_var))
-            call check(nf90_put_att(ncid, nf90_global, "inflation", rho))
-            call check(nf90_put_att(ncid, nf90_global, "localisation", loc))
+            call check(nf90_put_att(ncid, nf90_global, "timestep", dt))
+            call check(nf90_put_att(ncid, nf90_global, "x variable count", n_x))
+            call check(nf90_put_att(ncid, nf90_global, "y variable count (per x)", n_y))
+            call check(nf90_put_att(ncid, nf90_global, "z variable count (per y)", n_z))
+            call check(nf90_put_att(ncid, nf90_global, "ensemble size", n_ens))
             call check(nf90_put_att(ncid, nf90_global,&
                 & "assimilation frequency",assim_freq))
-            call check(nf90_put_att(ncid, nf90_global, "timestep", dt))
+            call check(nf90_put_att(ncid, nf90_global, "observation variance", y_var))
+            call check(nf90_put_att(ncid, nf90_global, "observation dimensions", obs_dim))
+            call check(nf90_put_att(ncid, nf90_global, "inflation", rho))
+            call check(nf90_put_att(ncid, nf90_global, "localisation", loc))
             call check(nf90_put_att(ncid, nf90_global, "git-rev", git_rev))
 
             ! Define time
