@@ -6,6 +6,9 @@ double : PRECISION = real(dp)
 single : PRECISION = real(sp)
 rpe : PRECISION = type(rpe_var)
 
+# Git revision
+GIT_REV := $(shell git rev-parse HEAD)
+
 # Double precision - default
 double: main
 
@@ -27,7 +30,7 @@ analysis.o: params.o utils.o observation.o
 setup.o: params.o lorenz96.o utils.o
 observation.o: params.o
 io.o: params.o io.f90
-	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' io.f90 -o io.o -Irpe/modules -I/usr/include
+	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' -DGIT_REV='"$(GIT_REV)"' io.f90 -o io.o -Irpe/modules -I/usr/include
 
 
 # Build rules

@@ -27,17 +27,8 @@ module io
         !> NOTE: uses a temporary file 'out.txt' to get the git revision.
         !> This file will be overwritten if it already exists, then deleted.
         subroutine setup_output()
-            character(len=41) :: git_rev
-
             ! Create NetCDF output file
-            call check(nf90_create('output.nc', nf90_clobber, ncid))
-
-            ! Get git revision
-            call execute_command_line('git rev-parse HEAD > out.txt')
-            open(unit=10, file='out.txt', action='read')
-            read(10, *) git_rev
-            close(10)
-            call execute_command_line('rm -f out.txt')
+            call check(nf90_create(outfile, nf90_clobber, ncid))
 
             ! Write metadata, including model parameters
             call check(nf90_put_att(ncid, nf90_global, "name", "Sam Hatfield"))
@@ -54,7 +45,7 @@ module io
             call check(nf90_put_att(ncid, nf90_global, "observation dimensions", obs_dim))
             call check(nf90_put_att(ncid, nf90_global, "inflation", rho))
             call check(nf90_put_att(ncid, nf90_global, "localisation", loc))
-            call check(nf90_put_att(ncid, nf90_global, "git-rev", git_rev))
+            call check(nf90_put_att(ncid, nf90_global, "git-rev", GIT_REV))
 
             ! Define time
             call check(nf90_def_dim(ncid, "time", nf90_unlimited, timedim))
@@ -79,7 +70,7 @@ module io
         end subroutine
 
         subroutine open_file()
-            call check(nf90_open('output.nc', nf90_write, ncid))
+            call check(nf90_open(outfile, nf90_write, ncid))
         end subroutine
 
         subroutine close_file()
