@@ -36,8 +36,11 @@ module params
     ! Observation error variance
     real(dp), parameter :: y_var = 0.1_dp
 
+    ! 1 = observe all Y variables, 2 = observe every other, 4 = observe every 4th
+    integer, parameter :: y_skip = 1
+
     ! Dimension of observation vector
-    integer, parameter :: obs_dim = n_x*n_y
+    integer, parameter :: obs_dim = n_x*n_y/y_skip
 
     ! Default significand
     integer, parameter :: sbits = 10

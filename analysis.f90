@@ -64,10 +64,10 @@ module analysis
                 gain = P_f_H_T / (HP_f_H_T + R(i, i))
 
                 ! Localize X variables
-                gain(:n_x) = localize_x(gain(:n_x), i)
+                gain(:n_x) = localize_x(gain(:n_x), y_skip*i-(y_skip-1))
 
                 ! Localize Y variables
-                gain(n_x+1:n_x+n_x*n_y) = localize_y(gain(n_x+1:n_x+n_x*n_y), i)
+                gain(n_x+1:n_x+n_x*n_y) = localize_y(gain(n_x+1:n_x+n_x*n_y), y_skip*i-(y_skip-1))
 
                 ! Update ensemble mean
                 ens_mean = ens_mean + gain * (obs(i) - observe(ens_mean, i))
@@ -94,10 +94,10 @@ module analysis
         !> @param[in] y the Y variable currently being assimilated
         !> @return local_gain the localised gain vector
         function localize_y(gain, y) result(local_gain)
-            PRECISION, intent(in) :: gain(obs_dim)
+            PRECISION, intent(in) :: gain(n_x*n_y)
             integer, intent(in) :: y
-            PRECISION :: local_gain(obs_dim)
-            PRECISION, save :: mask(obs_dim)
+            PRECISION :: local_gain(n_x*n_y)
+            PRECISION, save :: mask(n_x*n_y)
             PRECISION :: c
             logical, save :: first_call = .True.
             integer :: i, j
@@ -107,10 +107,10 @@ module analysis
             ! The localisation mask is only computed once, because it never
             ! changes
             if (first_call) then
-                do i = 0, obs_dim-1
+                do i = 0, n_x*n_y-1
                     ! Account for cyclicity of Y variables
-                    if (i >= obs_dim/2) then
-                        j = obs_dim - i
+                    if (i >= n_x*n_y/2) then
+                        j = n_x*n_y - i
                     else
                         j = i
                     end if

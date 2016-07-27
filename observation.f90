@@ -42,7 +42,7 @@ module observation
             {{ type.code }}, intent(in) :: state(:,:)
             {{ type.code }} :: observe(obs_dim, size(state,2))
             
-            observe = state(n_x+1:n_x+n_x*n_y,:)
+            observe = state(n_x+1:n_x+n_x*n_y:y_skip,:)
         end function
 
         !> @author
@@ -62,7 +62,7 @@ module observation
             integer, intent(in) :: y
             {{ type.code }} :: observe_row(size(state,2))
 
-            observe_row = state(n_x+y,:)
+            observe_row = state(n_x+(y_skip*y-(y_skip-1)),:)
         end function
 
         !> @author
@@ -79,7 +79,7 @@ module observation
             integer, intent(in) :: y 
             {{ type.code }} :: observe_1d_row
 
-            observe_1d_row = state(n_x+y)
+            observe_1d_row = state(n_x+(y_skip*y-(y_skip-1)))
         end function
         {% endfor %}
 end module
