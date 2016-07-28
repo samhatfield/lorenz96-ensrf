@@ -127,7 +127,7 @@ module utils
         !> @return sum_2d the sum
         pure function sum_2d_{{ type.name }}(array) result(sum_2d)
             {{ type.code }}, intent(in) :: array(:,:)
-        	{{ type.code }} :: sum_2d(size(array, 1))
+        	{{ type.code }} :: sum_2d(size(array, 2))
         	integer :: i, n
         	
         	n = size(array, 1)
