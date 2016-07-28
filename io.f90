@@ -24,8 +24,6 @@ module io
         !> @brief
         !> Sets up the output NetCDF file, including writing simulation
         !> parameters.
-        !> NOTE: uses a temporary file 'out.txt' to get the git revision.
-        !> This file will be overwritten if it already exists, then deleted.
         subroutine setup_output()
             ! Create NetCDF output file
             call check(nf90_create(outfile, nf90_clobber, ncid))
