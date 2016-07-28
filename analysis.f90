@@ -63,11 +63,14 @@ module analysis
                 ! Kalman gain
                 gain = P_f_H_T / (HP_f_H_T + R(i, i))
 
-                ! Localize X variables
-                gain(:n_x) = localize_x(gain(:n_x), y_skip*i-(y_skip-1))
-
-                ! Localize Y variables
-                gain(n_x+1:n_x+n_x*n_y) = localize_y(gain(n_x+1:n_x+n_x*n_y), y_skip*i-(y_skip-1))
+                ! Localization
+                if (loc >= 0.0_dp) then
+                    ! Localize X variables
+                    gain(:n_x) = localize_x(gain(:n_x), y_skip*i-(y_skip-1))
+    
+                    ! Localize Y variables
+                    gain(n_x+1:n_x+n_x*n_y) = localize_y(gain(n_x+1:n_x+n_x*n_y), y_skip*i-(y_skip-1))
+                end if
 
                 ! Update ensemble mean
                 ens_mean = ens_mean + gain * (obs(i) - observe(ens_mean, i))
