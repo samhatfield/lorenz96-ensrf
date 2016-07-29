@@ -187,7 +187,7 @@ module lorenz96
             ! Repeat elements of y n_z times
             y_rpt = (/ (y(1+(k-1)/n_z), k = 1, n_x*n_y*n_z) /)
 
-            dZdT = e*b*cshift(z,-1)*(cshift(z,1)-cshift(z,-2)) - g_Z*e*Z
+            dZdT = e*d*cshift(z,-1)*(cshift(z,1)-cshift(z,-2)) - g_Z*e*Z
             dZdT = dZdT + (h*e/d)*y_rpt
         end function
         
