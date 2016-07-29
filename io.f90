@@ -26,7 +26,7 @@ module io
         !> parameters.
         subroutine setup_output()
             ! Create NetCDF output file
-            call check(nf90_create(outfile, nf90_clobber, ncid))
+            call check(nf90_create(trim(outfile), nf90_clobber, ncid))
 
             ! Write metadata, including model parameters
             call check(nf90_put_att(ncid, nf90_global, "name", "Sam Hatfield"))

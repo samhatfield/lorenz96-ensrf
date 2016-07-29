@@ -8,7 +8,7 @@ module params
     integer, parameter :: write_freq = 50
 
     ! Output filename
-    character(len=9) :: outfile = 'output.nc'
+    character(len=20) :: outfile = 'output.nc'
 
     ! Write reduced output? .true. : stats only, .false. all x
     ! variables of each ensemble member and truth, plus stats
