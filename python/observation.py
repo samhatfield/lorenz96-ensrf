@@ -1,7 +1,10 @@
-from params import N_X
+from params import n_x
 
 """
 Defines our observation operation.
 """
 def observe(state):
-    return state[N_X:,:]
+    if len(state.shape) == 1:
+        return state[N_X:]
+    else:
+        return state[N_X:,:]
