@@ -1,8 +1,10 @@
 module params
+    use, intrinsic :: iso_fortran_env
+
     implicit none
     
-    integer, parameter :: dp = kind(0.d0)
-    integer, parameter :: sp = kind(0.0)
+    integer, parameter :: dp = real64
+    integer, parameter :: sp = real32
 
     ! Frequency with which to write output
     integer, parameter :: write_freq = 50
