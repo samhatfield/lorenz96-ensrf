@@ -70,8 +70,6 @@ module lorenz96
         ! Full three-level model
         !=======================================================================
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Steps forward once using 4th order Runge-Kutta scheme (full
         !> three-level model).
@@ -90,8 +88,6 @@ module lorenz96
             step = prev + (dt/6._dp)*(k1 + 2._dp*k2 + 2._dp*k3 + k4)
         end function
         
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> The full three-level system of ODEs.
         !> @param[in] state state vector of X, Y and Z variables
@@ -114,8 +110,6 @@ module lorenz96
             ode(n_x+n_x*n_y+1:) = dZdT(y, z)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> The ODE for the X variables.
         !> @param[in] x state vector of X variables
@@ -142,8 +136,6 @@ module lorenz96
         end function
         {% endfor %}
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> The ODE for the Y variables.
         !> @param[in] x state vector of X variables
@@ -170,8 +162,6 @@ module lorenz96
             dYdT = dYdT - (h*e/d)*sum_z
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> The ODE for the Z variables.
         !> @param[in] y state vector of Y variables
@@ -195,8 +185,6 @@ module lorenz96
         ! Three-level model with parametrised Z dynamics
         !=======================================================================     
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Steps forward once using 4th order Runge-Kutta scheme (two-level
         !> model with paramtrized Z level).
@@ -225,8 +213,6 @@ module lorenz96
             step = prev + (dt_rpe/six)*(k1 + two*k2 + two*k3 + k4)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> The two-level system of ODEs for the Lorenz '96 system, with
         !> parametrized Z.
@@ -250,8 +236,6 @@ module lorenz96
             ode(n_x+1:) = dYdT_param_z(x, y, stoch)
         end function
         
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> The ODE for the Y variables, with a parametrized Z-level.
         !> @param[in] x state vector of X variables

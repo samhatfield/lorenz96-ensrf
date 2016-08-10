@@ -19,8 +19,6 @@ module io
     logical :: reduced_
 
     contains
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Sets up the output NetCDF file, including writing simulation
         !> parameters.
@@ -76,8 +74,6 @@ module io
             call check(nf90_close(ncid))
         end subroutine
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Outputs the ensemble and truth data. Only the X values.
         !> @param[in] ensemble the ensemble
@@ -103,8 +99,6 @@ module io
             end if
         end subroutine
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Handles any errors from the NetCDF API.
         !> @param ierr the error code

@@ -30,8 +30,6 @@ module observation
 
     contains
         {% for type in types %}
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Observe a whole ensemble of state vectors. This treats each column
         !> (or row, I forget) as a state vector, observes each and returns
@@ -45,8 +43,6 @@ module observation
             observe = state(n_x+1:n_x+n_x*n_y:y_skip,:)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Observe a whole ensemble of state vectors, but just a single
         !> Y variable, instead of all observed variables. This treats each
@@ -65,8 +61,6 @@ module observation
             observe_row = state(n_x+(y_skip*y-(y_skip-1)),:)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Observe a single state vector, but just a single Y variable, instead
         !> of all observed variables. This is used for sequential data

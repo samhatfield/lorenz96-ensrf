@@ -15,8 +15,6 @@ module setup
     public spin_up, gen_ensemble, time_seed
 
     contains
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Spins up the truth run.
         !> @return truth the spun-up state vector used for generating the truth
@@ -37,8 +35,6 @@ module setup
             end do
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Generate the first background ensemble by sampling from the truth
         !> run.
@@ -57,8 +53,6 @@ module setup
             end do
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Seeds RNG from system clock.
         subroutine time_seed()

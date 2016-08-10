@@ -70,8 +70,6 @@ module utils
 
     contains
         {% for type in types %}
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Generates a random number drawn for the specified normal
         !> distribution.
@@ -91,8 +89,6 @@ module utils
             randn = mean + stdev * u * sin(v)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Generates a random number drawn from an AR(1) process. This has been
         !> tuned for parametrizing the Z variables in the two-layer Lorenz '96
@@ -118,8 +114,6 @@ module utils
             e = phi * last + sqrt(1-phi**2) * z
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Sum of 2D array (returns 1D array, with sum of elements along 1st
         !> dimension).
@@ -139,8 +133,6 @@ module utils
         	end do
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> RMSE between ensemble mean and truth. Only computes RMSE across
         !> X-variables.
@@ -159,8 +151,6 @@ module utils
             rmse_ens_mean = sqrt(sum((ens_mean - truth(:n_x))**2)/real(n_x))
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Average RMSE of each ensemble member. Only computed over X-variables.
         !> @param ensemble the ensemble
@@ -181,8 +171,6 @@ module utils
         end function
         {% endfor %}
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Calculates (biased) standard deviation of list of input variables.
         !> @param vars the input data
@@ -199,8 +187,6 @@ module utils
             std = sqrt(std / real(n, dp))
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Generates an identity matrix of the given size.
         !> @param dimen the dimension of the required identity matrix
@@ -217,8 +203,6 @@ module utils
         ! Reduced precision utils
         !=========================================================================== 
         
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> A reduced precision matrix multiplier.
         !> @param mat1 the first matrix
@@ -240,8 +224,6 @@ module utils
             end do
         end function matmul_rpe
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> A reduced precision matrix-vector multiplier.
         !> @param mat1 the matrix
@@ -260,8 +242,6 @@ module utils
             end do
         end function matmulvec_rpe
         
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Casts an rpe variable to a real value.
         !> @param rpe_input the input rpe variable

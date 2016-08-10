@@ -22,8 +22,6 @@ module analysis
     public ensrf_assimilate
 
     contains
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Performs sequential ensemble square-root filtering data assimilation
         !> with the given background ensemble, observation vector and
@@ -92,8 +90,6 @@ module analysis
             end do
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Localises given Y-variable Kalman gain vector based on the given
         !> currently assimilated Y variable.
@@ -133,8 +129,6 @@ module analysis
             local_gain = gain * cshift(mask, 1-y)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Localises given X-variable Kalman gain vector based on the given
         !> currently assimilated Y variable.
@@ -180,8 +174,6 @@ module analysis
             local_gain = gain * cshift(mask, 1-dist_y)
         end function
 
-        !> @author
-        !> Sam Hatfield, AOPP, University of Oxford
         !> @brief
         !> Gaspari-Cohn localisation function (see bibliography in file
         !> header).
