@@ -44,6 +44,7 @@ module io
             call check(nf90_put_att(ncid, nf90_global, "inflation", rho))
             call check(nf90_put_att(ncid, nf90_global, "localisation", loc))
             call check(nf90_put_att(ncid, nf90_global, "git-rev", GIT_REV))
+            call check(nf90_put_att(ncid, nf90_global, "precision", PREC_STR))
 
             ! Define time
             call check(nf90_def_dim(ncid, "time", nf90_unlimited, timedim))
