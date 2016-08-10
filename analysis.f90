@@ -39,10 +39,14 @@ module analysis
             PRECISION, dimension(state_dim, n_ens) :: analysis, X_f
             PRECISION, dimension(state_dim) :: P_f_H_T, gain, ens_mean
             PRECISION :: alpha, HP_f_H_T, one, rho_
+            PRECISION :: obs_(obs_dim)
+            PRECISION :: R_(obs_dim, obs_dim)
             integer :: i, j
 
             one = 1.0_dp
             rho_ = rho
+            obs_ = obs
+            R_ = R
 
             ! Mean ensemble vector
             ens_mean = (/ (sum(background(j, :))/real(n_ens) , j = 1, state_dim) /)
@@ -61,7 +65,7 @@ module analysis
                 HP_f_H_T = observe(P_f_H_T, i)
     
                 ! Kalman gain
-                gain = P_f_H_T / (HP_f_H_T + R(i, i))
+                gain = P_f_H_T / (HP_f_H_T + R_(i, i))
 
                 ! Localization
                 if (loc >= 0.0_dp) then
@@ -73,10 +77,10 @@ module analysis
                 end if
 
                 ! Update ensemble mean
-                ens_mean = ens_mean + gain * (obs(i) - observe(ens_mean, i))
+                ens_mean = ens_mean + gain * (obs_(i) - observe(ens_mean, i))
 
                 ! Update perturbations
-                alpha = one/(one+sqrt(R(i,i)/(HP_f_H_T+R(i,i))))
+                alpha = one/(one+sqrt(R_(i,i)/(HP_f_H_T+R_(i,i))))
                 do j = 1, n_ens
                     X_f(:, j) = X_f(:, j) - alpha*gain * observe(X_f(:, j), i)
                 end do
