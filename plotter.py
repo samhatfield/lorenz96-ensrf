@@ -25,7 +25,7 @@ truth_mean = truth.collapsed(['x'], analysis.MEAN)
 time = ens.coord('time')
 
 # Plot truth, ens mean and ens spread
-fig = plt.figure(figsize=(12,6))
+fig = plt.figure(figsize=(12,4))
 ens_h, = iplt.plot(ens_mean)
 truth_h, = iplt.plot(truth_mean)
 plt.fill_between(
@@ -43,6 +43,6 @@ plt.xlabel('MTUs')
 plt.ylabel('$\\bar{X}$')
 
 # Save to PDF
-plt.savefig('output.pdf')
+plt.savefig('output.pdf', bbox_inches='tight')
 
 plt.show()
