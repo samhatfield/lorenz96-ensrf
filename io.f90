@@ -81,7 +81,7 @@ module io
         !> @param[in] i the time step to write to
         subroutine output(ensemble, truth, i)
             PRECISION, intent(in) :: ensemble(state_dim, n_ens)
-            real(dp), intent(in) :: truth(truth_dim)
+            real(dp), intent(in) :: truth(state_dim)
             integer, intent(in) :: i
             integer :: j
 

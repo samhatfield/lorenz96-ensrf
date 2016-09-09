@@ -35,7 +35,10 @@ program main
     integer :: i, j
 
     ! Truth run, observations, ensemble and observation covariance matrix
-    real(dp) :: truth(truth_dim, n_steps)
+	! 'truth_full' stores the full truth state, X, Y and Z variables
+	! 'truth' just stores the X and Y variables (at every timestep) to save on memory
+    real(dp) :: truth(state_dim, n_steps)
+    real(dp) :: truth_full(truth_dim)
     real(dp) :: obs(obs_dim, n_steps)
     PRECISION :: ensemble(state_dim, n_ens)
     real(dp) :: obs_covar(obs_dim, obs_dim)
@@ -59,7 +62,8 @@ program main
 
     print *, "Spinning up..."
 
-    truth(:, 1) = spin_up()
+    truth_full = spin_up()
+    truth(:,1) = truth_full(:n_x+n_x*n_y)
 
     !===========================================================================
     ! Truth run
@@ -68,7 +72,8 @@ program main
     print *, "Generating truth..."
 
     do i = 2, n_steps
-        truth(:, i) = step(truth(:, i-1))
+        truth_full = step(truth_full)
+        truth(:,i) = truth_full(:n_x+n_x*n_y)
     end do
 
     !===========================================================================

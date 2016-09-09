@@ -141,7 +141,7 @@ module utils
         !> @return rmse_ens_mean the RMSE of the ensemble mean
         function rmse_ens_mean_{{ type.name }}(ensemble, truth) result(rmse_ens_mean)
             {{ type.code }}, dimension(state_dim, n_ens) :: ensemble
-            real(dp), dimension(truth_dim) :: truth
+            real(dp), dimension(state_dim) :: truth
             real(dp), dimension(n_x) :: ens_mean
             real(dp) :: rmse_ens_mean
             integer :: i
@@ -158,7 +158,7 @@ module utils
         !> @return mean_ens_rmse the mean of the RMSE of each ensemble member
         function mean_ens_rmse_{{ type.name }}(ensemble, truth) result(mean_ens_rmse)
             {{ type.code }}, dimension(state_dim, n_ens) :: ensemble
-            real(dp) :: truth(truth_dim)
+            real(dp) :: truth(state_dim)
             real(dp) :: ens_mse(n_ens)
             real(dp) :: mean_ens_rmse
             integer :: i

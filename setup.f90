@@ -41,7 +41,7 @@ module setup
         !> @param truth the truth run to sample from
         !> @return ensemble the generated ensemble
         function gen_ensemble(truth) result(ensemble)
-            real(dp), intent(in) :: truth(truth_dim, n_steps)
+            real(dp), intent(in) :: truth(state_dim, n_steps)
             PRECISION :: ensemble(state_dim, n_ens)
             real(dp) :: rand
             integer :: i, j
@@ -49,7 +49,7 @@ module setup
             do i = 1, n_ens
                 call random_number(rand)
                 j = ceiling(rand * n_steps)
-                ensemble(:, i) = truth(:n_x+n_x*n_y, j)
+                ensemble(:, i) = truth(:, j)
             end do
         end function
 
