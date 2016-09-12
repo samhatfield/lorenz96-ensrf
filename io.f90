@@ -71,6 +71,13 @@ module io
         end subroutine
 
         subroutine close_file()
+            real(dp) :: elapsed
+
+            ! Get elapsed time
+            call cpu_time(elapsed)
+            call check(nf90_redef(ncid))
+            call check(nf90_put_att(ncid, nf90_global, "cpu_time_seconds", elapsed))
+
             call check(nf90_close(ncid))
         end subroutine
 
