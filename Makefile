@@ -6,8 +6,9 @@ double : PRECISION = real(dp)
 single : PRECISION = real(sp)
 rpe : PRECISION = type(rpe_var)
 
-# Git revision
-GIT_REV := $(shell git rev-parse HEAD)
+# Git revisions for L96-EnSRF and RPE emulator
+GIT_REV_MAIN := $(shell git rev-parse HEAD)
+GIT_REV_RPE := $(shell ( cd rpe ; git rev-parse HEAD ))
 
 # Double precision - default
 double: main
@@ -30,8 +31,9 @@ analysis.o: params.o utils.o observation.o
 setup.o: params.o lorenz96.o utils.o
 observation.o: params.o
 io.o: params.o io.f90
-	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' -DGIT_REV='"$(GIT_REV)"'\
-		-DPREC_STR='"$(PRECISION)"'	io.f90 -o io.o -Irpe/modules -I/usr/include
+	$(FC) $(COMPARGS) -c -cpp -DPRECISION='$(PRECISION)' -DGIT_REV_MAIN='"$(GIT_REV_MAIN)"'\
+		-DPREC_STR='"$(PRECISION)"'	-DGIT_REV_RPE='"$(GIT_REV_RPE)"' io.f90 -o io.o\
+		-Irpe/modules -I/usr/include
 
 
 # Build rules

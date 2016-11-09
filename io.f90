@@ -41,7 +41,8 @@ module io
             call check(nf90_put_att(ncid, nf90_global, "observation dimensions", obs_dim))
             call check(nf90_put_att(ncid, nf90_global, "inflation", rho))
             call check(nf90_put_att(ncid, nf90_global, "localisation", loc))
-            call check(nf90_put_att(ncid, nf90_global, "git-rev", GIT_REV))
+            call check(nf90_put_att(ncid, nf90_global, "main git rev", GIT_REV_MAIN))
+            call check(nf90_put_att(ncid, nf90_global, "rpe git rev", GIT_REV_RPE))
             call check(nf90_put_att(ncid, nf90_global, "precision", PREC_STR))
 
             ! Define time
