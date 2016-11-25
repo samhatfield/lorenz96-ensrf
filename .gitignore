@@ -1,8 +1,12 @@
 *~
-figures
-results
 *swp
 *.mod
 *.o
+*.pdf
 out.*.f90
 main
+rpe
+*.nc
+means.py
+experiments
+profiles
