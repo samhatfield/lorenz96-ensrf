@@ -12,9 +12,11 @@ module params
     ! Output filename
     character(len=20) :: outfile = 'output.nc'
 
-    ! Write reduced output? .true. : stats only, .false. all x
-    ! variables of each ensemble member and truth, plus stats
-    logical, parameter :: reduced = .false.
+    ! Write values of X variables in output file?
+    logical, parameter :: output_x = .true.
+
+    ! Write values of Y variables in output file?
+    logical, parameter :: output_y = .false.
 
     !Start and end times, and number of time steps
     real(dp), parameter :: dt = 0.005_dp

@@ -14,9 +14,8 @@ module io
     public setup_output, output, open_file, close_file
 
     integer :: ncid
-    integer :: timedim, xdim, ensdim
-    integer :: timevar, xvar, truthx, ensvar, ensx, rmseensmeanx, meanensrmsex
-    logical :: reduced_
+    integer :: timedim, xdim, ensdim, ydim
+    integer :: timevar, xvar, truthx, ensvar, ensx, yvar, truthy, ensy, rmseensmeanx, meanensrmsex
 
     contains
         !> @brief
@@ -53,14 +52,26 @@ module io
             call check(nf90_def_var(ncid, "rmse_ens_mean", nf90_real4, timedim, rmseensmeanx))
             call check(nf90_def_var(ncid, "mean_ens_rmse", nf90_real4, timedim, meanensrmsex))
 
-            ! Write full output?
-            if (.not. reduced) then
-                call check(nf90_def_dim(ncid, "x", n_x, xdim))
-                call check(nf90_def_var(ncid, "x", nf90_int, xdim, xvar))
+            ! Output X or Y?
+            if (output_x .or. output_y) then
                 call check(nf90_def_dim(ncid, "ens", n_ens, ensdim))
                 call check(nf90_def_var(ncid, "ens", nf90_int, ensdim, ensvar))
+            end if
+
+            ! Output X?
+            if (output_x) then
+                call check(nf90_def_dim(ncid, "x", n_x, xdim))
+                call check(nf90_def_var(ncid, "x", nf90_int, xdim, xvar))
                 call check(nf90_def_var(ncid, "truthx", nf90_real4, (/ xdim, timedim /), truthx))
                 call check(nf90_def_var(ncid, "ensx", nf90_real4, (/ xdim, ensdim, timedim /), ensx))
+            end if
+
+            ! Write X and Y
+            if (output_y) then
+                call check(nf90_def_dim(ncid, "y", n_x*n_y, ydim))
+                call check(nf90_def_var(ncid, "y", nf90_int, ydim, yvar))
+                call check(nf90_def_var(ncid, "truthy", nf90_real4, (/ ydim, timedim /), truthy))
+                call check(nf90_def_var(ncid, "ensy", nf90_real4, (/ ydim, ensdim, timedim /), ensy))
             end if
 
             call check(nf90_enddef(ncid))
@@ -98,12 +109,23 @@ module io
             call check(nf90_put_var(ncid, rmseensmeanx, rmse_ens_mean(ensemble, truth), (/ i /)))
             call check(nf90_put_var(ncid, meanensrmsex, mean_ens_rmse(ensemble, truth), (/ i /)))
             
-            ! Write full output?
-            if (.not. reduced) then
+            ! Output X or Y?
+            if (output_x .or. output_y) then
+                call check(nf90_put_var(ncid, ensvar, (/ (j, j = 1, n_ens) /), (/ 1 /)))
+            end if
+
+            ! Output X?
+            if (output_x) then
                 call check(nf90_put_var(ncid, truthx, truth(:n_x), (/ 1, i /)))
                 call check(nf90_put_var(ncid, ensx, real(ensemble(:n_x, :)), (/ 1, 1, i /)))
                 call check(nf90_put_var(ncid, xvar, (/ (j, j = 1, n_x) /), (/ 1 /)))
-                call check(nf90_put_var(ncid, ensvar, (/ (j, j = 1, n_ens) /), (/ 1 /)))
+            end if
+
+            ! Output Y?
+            if (output_y) then
+                call check(nf90_put_var(ncid, truthy, truth(n_x+1:n_x+n_x*n_y), (/ 1, i /)))
+                call check(nf90_put_var(ncid, ensy, real(ensemble(n_x+1:n_x+n_x*n_y, :)), (/ 1, 1, i /)))
+                call check(nf90_put_var(ncid, yvar, (/ (j, j = 1, n_x*n_y) /), (/ 1 /)))
             end if
         end subroutine
 
