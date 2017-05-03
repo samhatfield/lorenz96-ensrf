@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/47407916.svg)](https://zenodo.org/badge/latestdoi/47407916)
+
+
 Lorenz '96 model
 ================
 
